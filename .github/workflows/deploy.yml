@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy
 
 on:
   push:
@@ -43,3 +43,35 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # The site is moving to Cloudflare Pages, where it is served from the root of its own domain.
+  # This job runs only after the tests in the build job pass.
+  cloudflare:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      PROJECT: natone
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+        env:
+          BASE_PATH: /
+      - name: Create the Pages project on the first run
+        run: |
+          if npx --yes wrangler@4 pages project list | grep -qw "$PROJECT"; then
+            echo "Project $PROJECT exists."
+          else
+            npx --yes wrangler@4 pages project create "$PROJECT" --production-branch main
+          fi
+      - uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=natone --branch=main
