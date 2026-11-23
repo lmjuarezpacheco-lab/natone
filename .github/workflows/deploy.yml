@@ -44,7 +44,8 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v4
 
-  # The site is moving to Cloudflare Pages, where it is served from the root of its own domain.
+  # The site is moving to Cloudflare Pages. One project serves the whole domain: the author's page at the
+  # root (folder sitio/) and the extension under /natone/.
   # This job runs only after the tests in the build job pass.
   cloudflare:
     needs: build
@@ -62,7 +63,12 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run build
         env:
-          BASE_PATH: /
+          BASE_PATH: /natone/
+      - name: Put the root page and the extension together
+        run: |
+          mkdir -p site/natone
+          cp -r sitio/. site/
+          cp -r dist/. site/natone/
       - name: Create the Pages project on the first run
         run: |
           if npx --yes wrangler@4 pages project list | grep -qw "$PROJECT"; then
@@ -74,4 +80,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=natone --branch=main
+          command: pages deploy site --project-name=natone --branch=main
