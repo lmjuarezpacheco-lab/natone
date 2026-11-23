@@ -2,6 +2,16 @@
 
 Extensión para Owlbear Rodeo: tracker de iniciativa con reroll por ronda y dice roller con dados 3D.
 
+## Instalar
+
+En Owlbear Rodeo: *Extensiones → Agregar extensión personalizada* y pega esta dirección:
+
+```
+https://lmjuarezpacheco-lab.github.io/tirada/manifest.json
+```
+
+Después activa *Tirada* en la sala.
+
 ## Qué hace
 
 **Iniciativa**
@@ -63,9 +73,10 @@ npm test
 npm run build
 ```
 
-`dist/` es un sitio estático. Súbelo a cualquier hosting con HTTPS y agrega `https://tu-dominio/manifest.json`
-en Owlbear Rodeo. Si el sitio vive en una subcarpeta (GitHub Pages), compila con
-`BASE_PATH=/nombre-del-repo/ npm run build`.
+Cada push a `main` compila y publica en GitHub Pages (`.github/workflows/deploy.yml`).
+
+`dist/` es un sitio estático, así que también sirve en otro hosting con HTTPS. Si el sitio vive en una
+subcarpeta, compila con `BASE_PATH=/nombre-de-la-carpeta/ npm run build`.
 
 ## Créditos
 
