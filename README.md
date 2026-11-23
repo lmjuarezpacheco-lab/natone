@@ -81,7 +81,7 @@ npm test
 npm run build
 ```
 
-Cada push a `main` pasa los tests, compila y publica en Cloudflare Pages (`.github/workflows/deploy.yml`).
+Cada push a `main` pasa los tests, compila y publica en el proyecto `anoobdm` de Cloudflare Pages (`.github/workflows/deploy.yml`).
 El sitio completo vive en `anoobdm.com`: la carpeta `sitio/` es la página de la raíz y la extensión se sirve en `/natone/`.
 
 `dist/` es un sitio estático, así que también sirve en otro hosting con HTTPS. Si el sitio vive en una

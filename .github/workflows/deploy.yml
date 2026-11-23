@@ -18,7 +18,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      PROJECT: natone
+      PROJECT: anoobdm
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
@@ -40,7 +40,7 @@ jobs:
           cp -r dist/. site/natone/
       - name: Create the Pages project on the first run
         run: |
-          if npx --yes wrangler@4 pages project list | grep -qw "$PROJECT"; then
+          if npx --yes wrangler@4 pages project list | grep -qE "(^|[^[:alnum:].-])$PROJECT([^[:alnum:].-]|$)"; then
             echo "Project $PROJECT exists."
           else
             npx --yes wrangler@4 pages project create "$PROJECT" --production-branch main
@@ -49,4 +49,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy site --project-name=natone --branch=main
+          command: pages deploy site --project-name=anoobdm --branch=main
