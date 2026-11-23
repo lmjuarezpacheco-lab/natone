@@ -103,7 +103,7 @@ export function syncTurnMarker(): void {
       try {
         await sync();
       } catch (error) {
-        console.warn("Tirada: turn marker update failed.", error);
+        console.warn("NatOne: turn marker update failed.", error);
       }
     } while (pending);
     running = false;

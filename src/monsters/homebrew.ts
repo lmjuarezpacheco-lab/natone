@@ -248,11 +248,12 @@ export function sanitizeProfile(raw: unknown): Profile | null {
 }
 
 export function buildBackup(profiles: readonly Profile[]): string {
-  return JSON.stringify({ tirada: FILE_VERSION, profiles }, null, 2);
+  return JSON.stringify({ natone: FILE_VERSION, profiles }, null, 2);
 }
 
 export function isBackup(json: unknown): boolean {
-  return isObject(json) && typeof json.tirada === "number" && Array.isArray(json.profiles);
+  // "tirada" is the marker of files written before the project was renamed.
+  return isObject(json) && (typeof json.natone === "number" || typeof json.tirada === "number") && Array.isArray(json.profiles);
 }
 
 export function parseBackup(json: unknown): { profiles: Profile[]; skipped: number } {

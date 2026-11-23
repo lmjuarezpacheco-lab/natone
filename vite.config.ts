@@ -12,13 +12,13 @@ function owlbearManifest(): Plugin {
   const manifest = () =>
     JSON.stringify(
       {
-        name: "Tirada",
+        name: "NatOne",
         version: pkg.version,
         manifest_version: 1,
         description: "Iniciativa con reroll por ronda y dados 3D.",
         icon: `${base}icon.svg`,
         action: {
-          title: "Tirada",
+          title: "NatOne",
           icon: `${base}icon.svg`,
           popover: `${base}index.html`,
           width: 380,

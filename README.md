@@ -1,4 +1,4 @@
-# Tirada
+# NatOne
 
 Extensión para Owlbear Rodeo: tracker de iniciativa con reroll por ronda y dice roller con dados 3D.
 
@@ -10,7 +10,7 @@ En Owlbear Rodeo: *Extensiones → Agregar extensión personalizada* y pega esta
 https://lmjuarezpacheco-lab.github.io/tirada/manifest.json
 ```
 
-Después activa *Tirada* en la sala.
+Después activa *NatOne* en la sala.
 
 ## Qué hace
 
@@ -47,7 +47,7 @@ Después activa *Tirada* en la sala.
   El archivo lo aporta cada GM. La extensión no descarga ni incluye contenido.
 - *Nuevo monstruo* abre el editor homebrew: estadísticas, salvaciones, habilidades, rasgos y acciones con ataque y daño.
   *Editar* en cualquier hoja abre el mismo editor.
-- *Exportar homebrew* descarga las hojas creadas en el editor como `tirada-homebrew.json`.
+- *Exportar homebrew* descarga las hojas creadas en el editor como `natone-homebrew.json`.
   *Importar JSON* también lee ese archivo, para pasar las hojas a otro navegador.
 - Las hojas se guardan solo en el navegador del GM (IndexedDB). No se envían a la sala.
 - Cada hoja tira pruebas, salvaciones, habilidades, ataques y daño. Opciones: ventaja, daño crítico, tirada oculta.
@@ -58,7 +58,7 @@ Después activa *Tirada* en la sala.
 Archivos de ejemplo para *Importar JSON*, en la carpeta [`ejemplos`](ejemplos). Los monstruos son inventados:
 
 - [`plantilla-monstruo.json`](https://github.com/lmjuarezpacheco-lab/tirada/releases/download/ejemplos/plantilla-monstruo.json): un monstruo en blanco para rellenar.
-- [`ejemplo-monstruos.json`](https://github.com/lmjuarezpacheco-lab/tirada/releases/download/ejemplos/ejemplo-monstruos.json): dos monstruos completos en el formato de Tirada.
+- [`ejemplo-monstruos.json`](https://github.com/lmjuarezpacheco-lab/tirada/releases/download/ejemplos/ejemplo-monstruos.json): dos monstruos completos en el formato de NatOne.
 - [`ejemplo-formato-5etools.json`](https://github.com/lmjuarezpacheco-lab/tirada/releases/download/ejemplos/ejemplo-formato-5etools.json): un monstruo en el formato 5etools.
 
 Sobre el contenido: solo el material del SRD es libre (CC-BY-4.0, con atribución a Wizards of the Coast).

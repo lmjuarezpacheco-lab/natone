@@ -73,7 +73,7 @@ export function Monsters({ backend, state, openId, onOpen }: Props) {
     const url = URL.createObjectURL(new Blob([buildBackup(sheets)], { type: "application/json" }));
     const link = document.createElement("a");
     link.href = url;
-    link.download = "tirada-homebrew.json";
+    link.download = "natone-homebrew.json";
     link.click();
     URL.revokeObjectURL(url);
     setStatus(`${sheets.length} ${sheets.length === 1 ? "hoja homebrew exportada" : "hojas homebrew exportadas"}.`);

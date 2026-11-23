@@ -107,9 +107,16 @@ describe("backup file", () => {
     expect(isBackup({ monster: [] })).toBe(false);
   });
 
+  it("writes the NatOne marker and still reads files written under the old name", () => {
+    expect(JSON.parse(buildBackup([sheet]))).toMatchObject({ natone: 1 });
+    expect(isBackup({ natone: 1, profiles: [] })).toBe(true);
+    expect(isBackup({ tirada: 1, profiles: [] })).toBe(true);
+    expect(isBackup({ profiles: [] })).toBe(false);
+  });
+
   it("repairs or drops damaged sheets", () => {
     const { profiles, skipped } = parseBackup({
-      tirada: 1,
+      natone: 1,
       profiles: [{ name: "Solo nombre", ac: "14", abilities: { str: 500 }, sections: "x", id: "mm|goblin" }, { ac: 3 }, null],
     });
     expect(skipped).toBe(2);

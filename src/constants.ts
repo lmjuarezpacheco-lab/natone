@@ -1,4 +1,5 @@
 /** Namespace for every key and channel this extension uses inside Owlbear Rodeo. */
+// The project was first called Tirada. The id keeps that name so data saved in rooms stays readable.
 export const ID = "app.tirada";
 /** Item metadata: marks a token as part of the tracker. */
 export const KEY_ITEM = `${ID}/combatant`;
