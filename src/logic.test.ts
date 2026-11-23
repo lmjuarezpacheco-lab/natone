@@ -5,6 +5,7 @@ import {
   endCombat,
   nextTurn,
   previousTurn,
+  readSettings,
   rollPatches,
   sanitizePlayerPatch,
   sortCombatants,
@@ -22,9 +23,9 @@ const c = (id: string, initiative: number | null, bonus = 0, ownerId = "gm"): Co
   visible: true,
 });
 
-const standard: Settings = { mode: "standard", rerollAuto: true, playersEditOwn: false };
-const rerollAuto: Settings = { mode: "reroll", rerollAuto: true, playersEditOwn: false };
-const rerollManual: Settings = { mode: "reroll", rerollAuto: false, playersEditOwn: false };
+const standard: Settings = { mode: "standard", rerollAuto: true, playersEditOwn: false, showMarker: true };
+const rerollAuto: Settings = { mode: "reroll", rerollAuto: true, playersEditOwn: false, showMarker: true };
+const rerollManual: Settings = { mode: "reroll", rerollAuto: false, playersEditOwn: false, showMarker: true };
 const never = () => {
   throw new Error("rng must not be used");
 };
@@ -102,6 +103,19 @@ describe("previousTurn", () => {
   it("crosses rounds only in standard mode", () => {
     expect(previousTurn(list, { round: 2, activeId: "a" }, standard)).toEqual({ round: 1, activeId: "b" });
     expect(previousTurn(list, { round: 2, activeId: "a" }, rerollAuto)).toEqual({ round: 2, activeId: "a" });
+  });
+});
+
+describe("readSettings", () => {
+  it("fills in defaults, so settings saved by an older version still work", () => {
+    expect(readSettings({ mode: "reroll", rerollAuto: false, playersEditOwn: true })).toEqual({
+      mode: "reroll",
+      rerollAuto: false,
+      playersEditOwn: true,
+      showMarker: true,
+    });
+    expect(readSettings(undefined)).toEqual({ mode: "standard", rerollAuto: true, playersEditOwn: false, showMarker: true });
+    expect(readSettings({ showMarker: false }).showMarker).toBe(false);
   });
 });
 

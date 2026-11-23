@@ -23,6 +23,8 @@ Después activa *Tirada* en la sala.
   - **Normal**: una tirada para todo el combate.
   - **Reroll cada ronda → Automático**: al terminar la ronda, el tracker tira d20 + bonificador para todos.
   - **Reroll cada ronda → Manual**: al terminar la ronda, las iniciativas se vacían y se vuelven a escribir o tirar.
+  - **Marcar en el mapa el token en turno**: un marco ámbar rodea al token activo. Cada cliente dibuja el suyo como
+    elemento local, así que no se guarda en la escena. Si el token está oculto, solo el GM ve el marco.
   - **Los jugadores pueden cambiar su propia iniciativa**: cada jugador edita solo los tokens que le pertenecen.
     El GM asigna el jugador de cada token en el menú `⋯`. El cliente del GM valida cada cambio, así que
     el GM debe estar conectado.

@@ -1,6 +1,7 @@
 // Runs in every client for as long as the room is open, even with the panel closed.
 import OBR from "@owlbear-rodeo/sdk";
 import { ownerOf, readItemData, setActive, writePatch } from "./backend/items";
+import { syncTurnMarker } from "./backend/turnMarker";
 import { CH_REQUEST, CH_ROLL, ID, KEY_ITEM, KEY_SETTINGS } from "./constants";
 import { appendHistory, parseRoll } from "./history";
 import { readSettings, sanitizePlayerPatch } from "./logic";
@@ -65,8 +66,25 @@ async function handleRequest(event: { data: unknown; connectionId: string }): Pr
   });
 }
 
+/** Keeps the turn frame on the map in step with the tracker. */
+function setupTurnMarker(): void {
+  let role: string | undefined;
+  OBR.scene.onReadyChange(syncTurnMarker);
+  OBR.scene.onMetadataChange(syncTurnMarker);
+  OBR.scene.items.onChange(syncTurnMarker);
+  OBR.scene.grid.onChange(syncTurnMarker);
+  OBR.room.onMetadataChange(syncTurnMarker);
+  // Player changes fire on every selection. Only a change of role matters here.
+  OBR.player.onChange((player) => {
+    if (player.role !== role) syncTurnMarker();
+    role = player.role;
+  });
+  syncTurnMarker();
+}
+
 OBR.onReady(() => {
   setupContextMenu();
+  setupTurnMarker();
   OBR.broadcast.onMessage(CH_REQUEST, (event) => void handleRequest(event));
   OBR.broadcast.onMessage(CH_ROLL, (event) => {
     const roll = parseRoll(event.data);

@@ -9,6 +9,8 @@ export interface Settings {
   rerollAuto: boolean;
   /** Players may edit the initiative and bonus of tokens they own. */
   playersEditOwn: boolean;
+  /** Draw a frame on the map around the token whose turn it is. */
+  showMarker: boolean;
 }
 
 export interface Combat {
@@ -121,6 +123,7 @@ export const DEFAULT_SETTINGS: Settings = {
   mode: "standard",
   rerollAuto: true,
   playersEditOwn: false,
+  showMarker: true,
 };
 
 export const DEFAULT_COMBAT: Combat = { round: 0, activeId: null };

@@ -135,6 +135,7 @@ export function readSettings(raw: unknown): Settings {
     mode: input.mode === "reroll" ? "reroll" : "standard",
     rerollAuto: typeof input.rerollAuto === "boolean" ? input.rerollAuto : DEFAULT_SETTINGS.rerollAuto,
     playersEditOwn: input.playersEditOwn === true,
+    showMarker: input.showMarker !== false,
   };
 }
 

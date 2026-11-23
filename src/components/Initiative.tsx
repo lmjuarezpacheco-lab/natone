@@ -320,6 +320,14 @@ function SettingsPanel({ settings, onChange }: { settings: Settings; onChange: (
         />
         Los jugadores pueden cambiar su propia iniciativa
       </label>
+      <label class="check">
+        <input
+          type="checkbox"
+          checked={settings.showMarker}
+          onChange={(e) => onChange({ ...settings, showMarker: e.currentTarget.checked })}
+        />
+        Marcar en el mapa el token en turno
+      </label>
     </div>
   );
 }
