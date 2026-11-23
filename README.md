@@ -80,4 +80,6 @@ subcarpeta, compila con `BASE_PATH=/nombre-de-la-carpeta/ npm run build`.
 
 ## Créditos
 
+- Los números de los modelos con color libre usan texturas propias, más gruesas y con contorno, en `dice-overrides/`.
+  `scripts/make-contrast-textures.sh` las genera a partir de las originales (requiere ImageMagick).
 - Dados 3D: [dice-box](https://github.com/3d-dice/dice-box) y [dice-themes](https://github.com/3d-dice/dice-themes) de Frank Ali, licencia MIT.

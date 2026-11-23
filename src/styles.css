@@ -435,18 +435,24 @@ button.icon:hover:not(:disabled) {
   flex-direction: column;
   gap: 8px;
 }
+/* The 3D canvas is drawn at twice the tray size and shown at half scale, so small numbers stay sharp. */
 .tray {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 200%;
+  transform: scale(0.5);
+  transform-origin: 0 0;
+}
+.tray-wrap {
   position: relative;
+  flex: none;
   height: 200px;
   border-radius: var(--radius);
   background: radial-gradient(ellipse at center, var(--fill-2), var(--fill));
   border: 1px solid var(--line);
   overflow: hidden;
-  flex: none;
-}
-.tray-wrap {
-  position: relative;
-  flex: none;
 }
 .tray-wrap.off {
   display: none;

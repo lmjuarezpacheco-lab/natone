@@ -17,7 +17,8 @@ async function getBox(container: string, theme: string, themeColor: string): Pro
         assetPath: `${import.meta.env.BASE_URL}assets/dice-box/`,
         theme,
         themeColor,
-        scale: 8,
+        // Sized for the tray's double-resolution canvas.
+        scale: 12,
         throwForce: 4,
         spinForce: 5,
         settleTimeout: 4000,
