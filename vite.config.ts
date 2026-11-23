@@ -3,7 +3,7 @@ import preact from "@preact/preset-vite";
 import type { Plugin } from "vite";
 import { defineConfig } from "vitest/config";
 
-// Set BASE_PATH when hosting under a sub-path, for example "/tirada/" on GitHub Pages.
+// Set BASE_PATH when hosting under a sub-path. The published site uses "/natone/".
 const base = process.env.BASE_PATH ?? "/";
 const pkg = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
 

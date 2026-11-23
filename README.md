@@ -7,7 +7,7 @@ Extensión para Owlbear Rodeo: tracker de iniciativa con reroll por ronda y dice
 En Owlbear Rodeo: *Extensiones → Agregar extensión personalizada* y pega esta dirección:
 
 ```
-https://lmjuarezpacheco-lab.github.io/tirada/manifest.json
+https://anoobdm.com/natone/manifest.json
 ```
 
 Después activa *NatOne* en la sala.
@@ -57,9 +57,9 @@ Después activa *NatOne* en la sala.
 
 Archivos de ejemplo para *Importar JSON*, en la carpeta [`ejemplos`](ejemplos). Los monstruos son inventados:
 
-- [`plantilla-monstruo.json`](https://github.com/lmjuarezpacheco-lab/tirada/releases/download/ejemplos/plantilla-monstruo.json): un monstruo en blanco para rellenar.
-- [`ejemplo-monstruos.json`](https://github.com/lmjuarezpacheco-lab/tirada/releases/download/ejemplos/ejemplo-monstruos.json): dos monstruos completos en el formato de NatOne.
-- [`ejemplo-formato-5etools.json`](https://github.com/lmjuarezpacheco-lab/tirada/releases/download/ejemplos/ejemplo-formato-5etools.json): un monstruo en el formato 5etools.
+- [`plantilla-monstruo.json`](https://github.com/lmjuarezpacheco-lab/natone/releases/download/ejemplos/plantilla-monstruo.json): un monstruo en blanco para rellenar.
+- [`ejemplo-monstruos.json`](https://github.com/lmjuarezpacheco-lab/natone/releases/download/ejemplos/ejemplo-monstruos.json): dos monstruos completos en el formato de NatOne.
+- [`ejemplo-formato-5etools.json`](https://github.com/lmjuarezpacheco-lab/natone/releases/download/ejemplos/ejemplo-formato-5etools.json): un monstruo en el formato 5etools.
 
 Sobre el contenido: solo el material del SRD es libre (CC-BY-4.0, con atribución a Wizards of the Coast).
 El resto de los libros oficiales tiene copyright. Si publicas esta extensión, no incluyas archivos de monstruos.
@@ -81,7 +81,8 @@ npm test
 npm run build
 ```
 
-Cada push a `main` compila y publica en GitHub Pages (`.github/workflows/deploy.yml`).
+Cada push a `main` pasa los tests, compila y publica en Cloudflare Pages (`.github/workflows/deploy.yml`).
+El sitio completo vive en `anoobdm.com`: la carpeta `sitio/` es la página de la raíz y la extensión se sirve en `/natone/`.
 
 `dist/` es un sitio estático, así que también sirve en otro hosting con HTTPS. Si el sitio vive en una
 subcarpeta, compila con `BASE_PATH=/nombre-de-la-carpeta/ npm run build`.

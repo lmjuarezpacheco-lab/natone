@@ -7,48 +7,15 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
+  group: deploy
   cancel-in-progress: true
 
+# One Cloudflare Pages project serves the whole domain: the author's page at the root (folder sitio/)
+# and the extension under /natone/.
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-      # The dice-box install script only copies assets. scripts/copy-assets.mjs does that during the build.
-      - run: npm ci --ignore-scripts
-      - run: npm test
-      - run: npm run build
-        env:
-          # Project pages are served from /<repository name>/.
-          BASE_PATH: /${{ github.event.repository.name }}/
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
   deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
-
-  # The site is moving to Cloudflare Pages. One project serves the whole domain: the author's page at the
-  # root (folder sitio/) and the extension under /natone/.
-  # This job runs only after the tests in the build job pass.
-  cloudflare:
-    needs: build
     runs-on: ubuntu-latest
     env:
       PROJECT: natone
@@ -60,7 +27,9 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      # The dice-box install script only copies assets. scripts/copy-assets.mjs does that during the build.
       - run: npm ci --ignore-scripts
+      - run: npm test
       - run: npm run build
         env:
           BASE_PATH: /natone/
