@@ -117,6 +117,8 @@ export interface Backend {
   sendRoll(entry: RollEntry): void;
   /** Standalone preview only. */
   setRole?(role: Role): void;
+  /** Standalone preview only. Inside Owlbear Rodeo the theme comes from the room. */
+  setThemeMode?(mode: ThemeColors["mode"]): void;
 }
 
 export const DEFAULT_SETTINGS: Settings = {

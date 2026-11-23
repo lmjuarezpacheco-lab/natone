@@ -1,7 +1,7 @@
 // Sample data for previewing the panel outside Owlbear Rodeo. Nothing here is shared or saved.
 import { mergeRolls } from "../history";
 import { applyPatches, canEdit } from "../logic";
-import type { Backend, Combatant, State } from "../types";
+import type { Backend, Combatant, State, ThemeColors } from "../types";
 import { DEFAULT_COMBAT, DEFAULT_SETTINGS } from "../types";
 
 const SAMPLE: Combatant[] = [
@@ -11,6 +11,32 @@ const SAMPLE: Combatant[] = [
   { id: "t4", name: "Goblin A", initiative: null, bonus: 2, ownerId: "sara", profileId: null, visible: true },
   { id: "t5", name: "Ogro oculto", initiative: null, bonus: -1, ownerId: "sara", profileId: null, visible: false },
 ];
+
+// Close to the two themes of Owlbear Rodeo, so the preview shows what the panel looks like in each.
+const PREVIEW_THEMES: Record<ThemeColors["mode"], ThemeColors> = {
+  DARK: {
+    mode: "DARK",
+    primary: "#bb99ff",
+    primaryContrast: "#1a1a2e",
+    background: "#1e2231",
+    paper: "#222639",
+    text: "#ffffff",
+    textSecondary: "rgba(255,255,255,0.7)",
+  },
+  LIGHT: {
+    mode: "LIGHT",
+    primary: "#7a52d6",
+    primaryContrast: "#ffffff",
+    background: "#f1f3f9",
+    paper: "#ffffff",
+    text: "rgba(0,0,0,0.87)",
+    textSecondary: "rgba(0,0,0,0.62)",
+  },
+};
+
+function preferredMode(): ThemeColors["mode"] {
+  return typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: light)").matches ? "LIGHT" : "DARK";
+}
 
 export function createMockBackend(): Backend {
   let state: State = {
@@ -27,15 +53,7 @@ export function createMockBackend(): Backend {
     settings: { ...DEFAULT_SETTINGS },
     combat: { ...DEFAULT_COMBAT },
     rolls: [],
-    theme: {
-      mode: "DARK",
-      primary: "#bb99ff",
-      primaryContrast: "#1a1a2e",
-      background: "#1e2231",
-      paper: "#222639",
-      text: "#ffffff",
-      textSecondary: "rgba(255,255,255,0.7)",
-    },
+    theme: PREVIEW_THEMES[preferredMode()],
   };
   const listeners = new Set<() => void>();
   const set = (patch: Partial<State>) => {
@@ -79,6 +97,9 @@ export function createMockBackend(): Backend {
     },
     sendRoll(entry) {
       set({ rolls: mergeRolls(state.rolls, [entry]) });
+    },
+    setThemeMode(mode) {
+      set({ theme: PREVIEW_THEMES[mode] });
     },
     setRole(role) {
       set({ me: { ...state.me, role }, players: state.players.map((p) => (p.id === "me" ? { ...p, role } : p)) });

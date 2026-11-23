@@ -12,6 +12,7 @@ import {
   type Step,
 } from "../logic";
 import type { Backend, Combatant, Settings, State } from "../types";
+import { Help } from "./Help";
 import { NumField } from "./NumField";
 
 interface Props {
@@ -264,7 +265,10 @@ function SettingsPanel({ settings, onChange }: { settings: Settings; onChange: (
   return (
     <div class="settings">
       <div class="field">
-        <span class="field-label">Orden de iniciativa</span>
+        <span class="field-label">
+          Orden de iniciativa
+          <Help text="Normal: una tirada vale para todo el combate. Reroll cada ronda: al terminar la ronda, todos vuelven a tirar iniciativa." />
+        </span>
         <div class="segmented" role="group" aria-label="Orden de iniciativa">
           <button
             type="button"
@@ -319,6 +323,7 @@ function SettingsPanel({ settings, onChange }: { settings: Settings; onChange: (
           onChange={(e) => onChange({ ...settings, playersEditOwn: e.currentTarget.checked })}
         />
         Los jugadores pueden cambiar su propia iniciativa
+        <Help text="Cada jugador puede escribir o tirar la iniciativa de sus propios tokens. El dueño de cada token se asigna en su menú de opciones. El GM debe estar conectado." />
       </label>
       <label class="check">
         <input
@@ -327,6 +332,7 @@ function SettingsPanel({ settings, onChange }: { settings: Settings; onChange: (
           onChange={(e) => onChange({ ...settings, showMarker: e.currentTarget.checked })}
         />
         Marcar en el mapa el token en turno
+        <Help text="Dibuja un marco alrededor del token que tiene el turno. Si el token está oculto, solo el GM ve el marco." />
       </label>
     </div>
   );

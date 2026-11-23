@@ -7,6 +7,7 @@ import { parseMonsterFile } from "../monsters/parse5etools";
 import { ABILITIES, type Ability, type Feature, type Profile, type ProfileSummary, abilityModifier } from "../monsters/types";
 import type { Backend, RollEntry, State } from "../types";
 import { Editor } from "./Editor";
+import { Help } from "./Help";
 import { RollLine } from "./RollLine";
 
 interface Props {
@@ -362,10 +363,12 @@ function Sheet({ id, backend, state, onBack, onDeleted, onEdit }: SheetProps) {
         <label class="check">
           <input type="checkbox" checked={crit} onChange={(e) => setCrit(e.currentTarget.checked)} />
           Daño crítico
+          <Help text="Duplica los dados de daño. El modificador no se duplica." />
         </label>
         <label class="check">
           <input type="checkbox" checked={hidden} onChange={(e) => setHidden(e.currentTarget.checked)} />
           Tiradas ocultas
+          <Help text="Las tiradas de esta hoja no se comparten con los jugadores." />
         </label>
       </div>
 

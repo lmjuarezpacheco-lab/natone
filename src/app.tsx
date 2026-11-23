@@ -54,10 +54,17 @@ export function App({ backend }: { backend: Backend }) {
 
       {state.standalone && backend.setRole && (
         <div class="devbar">
-          Vista previa con datos de ejemplo.
-          <button type="button" onClick={() => backend.setRole!(state.me.role === "GM" ? "PLAYER" : "GM")}>
-            Ver como {state.me.role === "GM" ? "jugador" : "GM"}
-          </button>
+          <span>Vista previa con datos de ejemplo.</span>
+          <span class="devbar-buttons">
+            {backend.setThemeMode && (
+              <button type="button" onClick={() => backend.setThemeMode!(state.theme.mode === "DARK" ? "LIGHT" : "DARK")}>
+                Tema {state.theme.mode === "DARK" ? "claro" : "oscuro"}
+              </button>
+            )}
+            <button type="button" onClick={() => backend.setRole!(state.me.role === "GM" ? "PLAYER" : "GM")}>
+              Ver como {state.me.role === "GM" ? "jugador" : "GM"}
+            </button>
+          </span>
         </div>
       )}
 

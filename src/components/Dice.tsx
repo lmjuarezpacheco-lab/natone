@@ -19,6 +19,7 @@ import {
 import { THEMES, findTheme } from "../dice/themes";
 import { type Prefs, loadPrefs, savePrefs } from "../prefs";
 import type { Backend, RollEntry, State } from "../types";
+import { Help } from "./Help";
 import { RollLine } from "./RollLine";
 
 interface Props {
@@ -147,6 +148,7 @@ export function Dice({ backend, state, visible }: Props) {
           <label class="check">
             <input type="checkbox" checked={prefs.dice3d} onChange={(e) => updatePrefs({ dice3d: e.currentTarget.checked })} />
             Dados 3D
+            <Help text="Muestra los dados rodando en la bandeja. Solo cambia lo que ves tú. Apágalos si tu equipo va lento." />
           </label>
           <div class="field inline">
             <label>
@@ -173,6 +175,7 @@ export function Dice({ backend, state, visible }: Props) {
           <label class="check">
             <input type="checkbox" checked={prefs.notify} onChange={(e) => updatePrefs({ notify: e.currentTarget.checked })} />
             Avisarme de tiradas de otros
+            <Help text="Muestra un aviso cada vez que otra persona comparte una tirada." />
           </label>
           <p class="field-help">Estos ajustes son solo tuyos. Los demás no ven tus dados 3D, solo el resultado.</p>
         </div>
@@ -246,6 +249,7 @@ export function Dice({ backend, state, visible }: Props) {
           <div class="keep-row" key={sides}>
             <span class="keep-die">
               {count}d{sides}
+              <Help text="Elige qué dados se suman: todos, los más altos o los más bajos. Con ventaja se tiran 2d20 y cuenta el más alto." />
             </span>
             <div class="segmented small" role="group" aria-label={`Qué d${sides} se suman`}>
               <button type="button" class={!rule ? "on" : ""} aria-pressed={!rule} onClick={() => updatePool(withKeep(pool, sides, null))}>
@@ -328,6 +332,7 @@ export function Dice({ backend, state, visible }: Props) {
         <label class="check">
           <input type="checkbox" checked={hidden} onChange={(e) => setHidden(e.currentTarget.checked)} />
           Oculta
+          <Help text="La tirada no se comparte. Solo tú ves el resultado." />
         </label>
       </div>
 
