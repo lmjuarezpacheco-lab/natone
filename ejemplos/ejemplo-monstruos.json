@@ -1,0 +1,118 @@
+{
+  "tirada": 1,
+  "profiles": [
+    {
+      "id": "hb|lobo-de-ceniza",
+      "name": "Lobo de ceniza",
+      "kind": "Bestia mediana",
+      "cr": "2",
+      "ac": 14,
+      "acNote": "armadura natural",
+      "hp": 37,
+      "hpFormula": "5d8 + 15",
+      "speed": "40 pies",
+      "abilities": { "str": 16, "dex": 15, "con": 16, "int": 3, "wis": 12, "cha": 6 },
+      "saves": { "dex": 4 },
+      "skills": { "percepción": 3, "sigilo": 4 },
+      "sections": [
+        {
+          "title": "Rasgos",
+          "features": [
+            {
+              "name": "Defensas y sentidos",
+              "text": "Visión en la oscuridad 60 pies, Percepción pasiva 13."
+            },
+            {
+              "name": "Olfato agudo",
+              "text": "Ventaja en pruebas de Percepción basadas en el olfato."
+            }
+          ]
+        },
+        {
+          "title": "Acciones",
+          "features": [
+            {
+              "name": "Mordisco",
+              "text": "Ataque cuerpo a cuerpo, alcance 5 pies, un objetivo.",
+              "hit": 5,
+              "damage": [
+                { "notation": "2d6 + 3", "type": "perforante" },
+                { "notation": "1d6", "type": "fuego" }
+              ]
+            },
+            {
+              "name": "Aliento de brasas (Recarga 5-6)",
+              "text": "Cono de 15 pies. Salvación de Destreza CD 13; mitad de daño si la supera.",
+              "damage": [{ "notation": "4d6", "type": "fuego" }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hb|centinela-de-obsidiana",
+      "name": "Centinela de obsidiana",
+      "kind": "Constructo grande",
+      "cr": "7",
+      "ac": 17,
+      "acNote": "armadura natural",
+      "hp": 126,
+      "hpFormula": "12d10 + 60",
+      "speed": "30 pies",
+      "abilities": { "str": 20, "dex": 8, "con": 20, "int": 5, "wis": 11, "cha": 3 },
+      "saves": { "con": 8, "wis": 3 },
+      "skills": { "percepción": 3 },
+      "initiative": 2,
+      "sections": [
+        {
+          "title": "Rasgos",
+          "features": [
+            {
+              "name": "Forma inmutable",
+              "text": "Inmune a cualquier conjuro o efecto que altere su forma."
+            }
+          ]
+        },
+        {
+          "title": "Acciones",
+          "features": [
+            {
+              "name": "Ataque múltiple",
+              "text": "Hace dos ataques de Puño."
+            },
+            {
+              "name": "Puño",
+              "text": "Ataque cuerpo a cuerpo, alcance 10 pies, un objetivo.",
+              "hit": 8,
+              "damage": [{ "notation": "2d8 + 5", "type": "contundente" }]
+            },
+            {
+              "name": "Lluvia de esquirlas (Recarga 6)",
+              "text": "Línea de 30 pies por 5 pies. Salvación de Destreza CD 16; mitad de daño si la supera.",
+              "damage": [{ "notation": "6d8", "type": "cortante" }]
+            }
+          ]
+        },
+        {
+          "title": "Reacciones",
+          "features": [
+            {
+              "name": "Coraza reflectante",
+              "text": "Cuando un ataque a distancia falla contra el centinela, el atacante recibe el daño indicado.",
+              "damage": [{ "notation": "1d10", "type": "perforante" }]
+            }
+          ]
+        },
+        {
+          "title": "Acciones legendarias",
+          "features": [
+            {
+              "name": "Pisotón",
+              "text": "Cada criatura a 10 pies o menos hace una salvación de Fuerza CD 16 o queda derribada."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

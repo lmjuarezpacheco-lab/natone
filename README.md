@@ -55,6 +55,12 @@ Después activa *Tirada* en la sala.
 - *Asignar a tokens seleccionados* vincula la hoja con tokens del mapa, pone su bonificador de iniciativa y los agrega al tracker.
 - Límites: los monstruos que copian a otro de un archivo distinto (`_copy`) se omiten, y los cambios `_mod` no se aplican.
 
+Archivos de ejemplo para *Importar JSON*, en la carpeta [`ejemplos`](ejemplos). Los monstruos son inventados:
+
+- [`plantilla-monstruo.json`](https://github.com/lmjuarezpacheco-lab/tirada/releases/download/ejemplos/plantilla-monstruo.json): un monstruo en blanco para rellenar.
+- [`ejemplo-monstruos.json`](https://github.com/lmjuarezpacheco-lab/tirada/releases/download/ejemplos/ejemplo-monstruos.json): dos monstruos completos en el formato de Tirada.
+- [`ejemplo-formato-5etools.json`](https://github.com/lmjuarezpacheco-lab/tirada/releases/download/ejemplos/ejemplo-formato-5etools.json): un monstruo en el formato 5etools.
+
 Sobre el contenido: solo el material del SRD es libre (CC-BY-4.0, con atribución a Wizards of the Coast).
 El resto de los libros oficiales tiene copyright. Si publicas esta extensión, no incluyas archivos de monstruos.
 

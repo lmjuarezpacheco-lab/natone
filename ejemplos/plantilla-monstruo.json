@@ -1,0 +1,41 @@
+{
+  "tirada": 1,
+  "profiles": [
+    {
+      "id": "hb|nombre-del-monstruo",
+      "name": "Nombre del monstruo",
+      "kind": "Tipo y tamaño",
+      "cr": "1",
+      "ac": 10,
+      "acNote": "",
+      "hp": 10,
+      "hpFormula": "2d8 + 2",
+      "speed": "30 pies",
+      "abilities": { "str": 10, "dex": 10, "con": 10, "int": 10, "wis": 10, "cha": 10 },
+      "saves": {},
+      "skills": {},
+      "sections": [
+        {
+          "title": "Rasgos",
+          "features": [
+            {
+              "name": "Nombre del rasgo",
+              "text": "Texto del rasgo."
+            }
+          ]
+        },
+        {
+          "title": "Acciones",
+          "features": [
+            {
+              "name": "Nombre del ataque",
+              "text": "Ataque cuerpo a cuerpo, alcance 5 pies, un objetivo.",
+              "hit": 3,
+              "damage": [{ "notation": "1d6 + 1", "type": "cortante" }]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

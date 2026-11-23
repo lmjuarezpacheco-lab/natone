@@ -1,0 +1,42 @@
+{
+  "monster": [
+    {
+      "name": "Ash Wolf",
+      "source": "MiCampaña",
+      "size": ["M"],
+      "type": "beast",
+      "ac": [{ "ac": 14, "from": ["natural armor"] }],
+      "hp": { "average": 37, "formula": "5d8 + 15" },
+      "speed": { "walk": 40 },
+      "str": 16,
+      "dex": 15,
+      "con": 16,
+      "int": 3,
+      "wis": 12,
+      "cha": 6,
+      "save": { "dex": "+4" },
+      "skill": { "perception": "+3", "stealth": "+4" },
+      "cr": "2",
+      "trait": [
+        {
+          "name": "Keen Smell",
+          "entries": ["The wolf has advantage on Wisdom (Perception) checks that rely on smell."]
+        }
+      ],
+      "action": [
+        {
+          "name": "Bite",
+          "entries": [
+            "{@atk mw} {@hit 5} to hit, reach 5 ft., one target. {@h}10 ({@damage 2d6 + 3}) piercing damage plus 3 ({@damage 1d6}) fire damage."
+          ]
+        },
+        {
+          "name": "Ember Breath {@recharge 5}",
+          "entries": [
+            "The wolf exhales embers in a 15-foot cone. Each creature in that area must make a {@dc 13} Dexterity saving throw, taking 14 ({@damage 4d6}) fire damage on a failed save, or half as much damage on a successful one."
+          ]
+        }
+      ]
+    }
+  ]
+}
