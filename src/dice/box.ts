@@ -30,7 +30,7 @@ async function getBox(container: string, theme: string, themeColor: string): Pro
         // Heavier fall and more damping than the engine's defaults, so dice land with weight and settle in
         // one and a half to two seconds instead of creeping for three or four. A die still moving after
         // settleTimeout is stopped where it is.
-        gravity: 2.5 0.65 0.85,
+        gravity: 2.5,
         linearDamping: 0.65,
         angularDamping: 0.85,
         settleTimeout: 2600,
