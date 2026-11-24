@@ -1,0 +1,118 @@
+{
+  "natone": 1,
+  "profiles": [
+    {
+      "id": "hb|ash-wolf",
+      "name": "Ash Wolf",
+      "kind": "Medium beast",
+      "cr": "2",
+      "ac": 14,
+      "acNote": "natural armor",
+      "hp": 37,
+      "hpFormula": "5d8 + 15",
+      "speed": "40 ft.",
+      "abilities": { "str": 16, "dex": 15, "con": 16, "int": 3, "wis": 12, "cha": 6 },
+      "saves": { "dex": 4 },
+      "skills": { "perception": 3, "stealth": 4 },
+      "sections": [
+        {
+          "title": "Traits",
+          "features": [
+            {
+              "name": "Defenses and senses",
+              "text": "Darkvision 60 ft., passive Perception 13."
+            },
+            {
+              "name": "Keen Smell",
+              "text": "Advantage on Perception checks that rely on smell."
+            }
+          ]
+        },
+        {
+          "title": "Actions",
+          "features": [
+            {
+              "name": "Bite",
+              "text": "Melee attack, reach 5 ft., one target.",
+              "hit": 5,
+              "damage": [
+                { "notation": "2d6 + 3", "type": "piercing" },
+                { "notation": "1d6", "type": "fire" }
+              ]
+            },
+            {
+              "name": "Ember Breath (Recharge 5-6)",
+              "text": "15-foot cone. DC 13 Dexterity saving throw; half damage on a success.",
+              "damage": [{ "notation": "4d6", "type": "fire" }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hb|obsidian-sentinel",
+      "name": "Obsidian Sentinel",
+      "kind": "Large construct",
+      "cr": "7",
+      "ac": 17,
+      "acNote": "natural armor",
+      "hp": 126,
+      "hpFormula": "12d10 + 60",
+      "speed": "30 ft.",
+      "abilities": { "str": 20, "dex": 8, "con": 20, "int": 5, "wis": 11, "cha": 3 },
+      "saves": { "con": 8, "wis": 3 },
+      "skills": { "perception": 3 },
+      "initiative": 2,
+      "sections": [
+        {
+          "title": "Traits",
+          "features": [
+            {
+              "name": "Immutable Form",
+              "text": "Immune to any spell or effect that would alter its form."
+            }
+          ]
+        },
+        {
+          "title": "Actions",
+          "features": [
+            {
+              "name": "Multiattack",
+              "text": "It makes two Fist attacks."
+            },
+            {
+              "name": "Fist",
+              "text": "Melee attack, reach 10 ft., one target.",
+              "hit": 8,
+              "damage": [{ "notation": "2d8 + 5", "type": "bludgeoning" }]
+            },
+            {
+              "name": "Rain of Shards (Recharge 6)",
+              "text": "Line 30 ft. long and 5 ft. wide. DC 16 Dexterity saving throw; half damage on a success.",
+              "damage": [{ "notation": "6d8", "type": "slashing" }]
+            }
+          ]
+        },
+        {
+          "title": "Reactions",
+          "features": [
+            {
+              "name": "Reflective Shell",
+              "text": "When a ranged attack misses the sentinel, the attacker takes the damage shown.",
+              "damage": [{ "notation": "1d10", "type": "piercing" }]
+            }
+          ]
+        },
+        {
+          "title": "Legendary actions",
+          "features": [
+            {
+              "name": "Stomp",
+              "text": "Each creature within 10 ft. makes a DC 16 Strength saving throw or is knocked prone."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

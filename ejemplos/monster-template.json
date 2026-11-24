@@ -1,0 +1,41 @@
+{
+  "natone": 1,
+  "profiles": [
+    {
+      "id": "hb|monster-name",
+      "name": "Monster name",
+      "kind": "Size and type",
+      "cr": "1",
+      "ac": 10,
+      "acNote": "",
+      "hp": 10,
+      "hpFormula": "2d8 + 2",
+      "speed": "30 ft.",
+      "abilities": { "str": 10, "dex": 10, "con": 10, "int": 10, "wis": 10, "cha": 10 },
+      "saves": {},
+      "skills": {},
+      "sections": [
+        {
+          "title": "Traits",
+          "features": [
+            {
+              "name": "Trait name",
+              "text": "Text of the trait."
+            }
+          ]
+        },
+        {
+          "title": "Actions",
+          "features": [
+            {
+              "name": "Attack name",
+              "text": "Melee attack, reach 5 ft., one target.",
+              "hit": 3,
+              "damage": [{ "notation": "1d6 + 1", "type": "slashing" }]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

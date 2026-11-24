@@ -86,6 +86,12 @@ Archivos de ejemplo para *Importar JSON*, en la carpeta [`ejemplos`](ejemplos). 
 - [`ejemplo-monstruos.json`](https://github.com/lmjuarezpacheco-lab/natone/releases/download/ejemplos/ejemplo-monstruos.json): dos monstruos completos en el formato de NatOne.
 - [`ejemplo-formato-5etools.json`](https://github.com/lmjuarezpacheco-lab/natone/releases/download/ejemplos/ejemplo-formato-5etools.json): un monstruo en el formato 5etools.
 
+Los mismos archivos en inglés:
+
+- [`monster-template.json`](https://github.com/lmjuarezpacheco-lab/natone/releases/download/ejemplos/monster-template.json)
+- [`example-monsters.json`](https://github.com/lmjuarezpacheco-lab/natone/releases/download/ejemplos/example-monsters.json)
+- [`example-5etools-format.json`](https://github.com/lmjuarezpacheco-lab/natone/releases/download/ejemplos/example-5etools-format.json)
+
 Sobre el contenido: solo el material del SRD es libre (CC-BY-4.0, con atribución a Wizards of the Coast).
 El resto de los libros oficiales tiene copyright. Si publicas esta extensión, no incluyas archivos de monstruos.
 
