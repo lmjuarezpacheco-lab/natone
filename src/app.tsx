@@ -12,6 +12,15 @@ import type { Backend, State } from "./types";
 
 type Tab = "initiative" | "dice" | "monsters";
 
+/**
+ * NatOne's own blue for buttons, the active tab and the tray. Background and text still follow
+ * Owlbear Rodeo's theme, so the panel sits well in the room in light and in dark.
+ */
+const ACCENT = {
+  dark: { color: "#9db4f0", contrast: "#0e1424" },
+  light: { color: "#24418a", contrast: "#ffffff" },
+};
+
 /** Panel widths in CSS pixels. Keep in sync with styles.css and the manifest in vite.config.ts. */
 const MAIN_WIDTH = 380;
 const HANDLE_WIDTH = 24;
@@ -57,13 +66,14 @@ export function App({ backend }: { backend: Backend }) {
   // The monster library belongs to the GM.
   const tab = selectedTab === "monsters" && !isGM ? "initiative" : selectedTab;
 
-  // Follow Owlbear Rodeo's light or dark theme.
+  // Follow Owlbear Rodeo's light or dark theme for surfaces and text.
   useEffect(() => {
     const root = document.documentElement;
     root.dataset.mode = state.theme.mode.toLowerCase();
     root.classList.toggle("standalone", state.standalone);
-    root.style.setProperty("--primary", state.theme.primary);
-    root.style.setProperty("--primary-contrast", state.theme.primaryContrast);
+    const accent = ACCENT[state.theme.mode === "LIGHT" ? "light" : "dark"];
+    root.style.setProperty("--primary", accent.color);
+    root.style.setProperty("--primary-contrast", accent.contrast);
     root.style.setProperty("--bg", state.theme.background);
     root.style.setProperty("--paper", state.theme.paper);
     root.style.setProperty("--text", state.theme.text);
