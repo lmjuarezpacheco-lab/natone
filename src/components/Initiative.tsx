@@ -1,4 +1,4 @@
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { initiativeEntries } from "../dice/entry";
 import { cryptoRng } from "../dice/notation";
 import { type ThrowDice, throwD20s } from "../dice/throw";
@@ -11,6 +11,7 @@ import {
   endCombat,
   feedRng,
   nextTurn,
+  startCombat,
   previousTurn,
   rollPatches,
   sortCombatants,
@@ -62,6 +63,20 @@ export function Initiative({ backend, state, throwDice, rolling, onOpenProfile }
     logRolls(combatants, step.patches);
   };
   const previous = () => backend.setCombat(previousTurn(combatants, combat, settings));
+  /** Back to round 1 with the same people; with automatic re-roll, missing values are rolled first. */
+  const restart = async () => {
+    if (rolling) return;
+    const needed = countRolls((rng) => startCombat(combatants, settings, rng));
+    const faces = await throwD20s(throwDice, needed);
+    const step = startCombat(combatants, settings, feedRng(faces, cryptoRng));
+    await apply(step);
+    logRolls(combatants, step.patches);
+  };
+  // A round number without anyone in the tracker means nothing, and the tracker hid every button that could
+  // clear it. The round lives in the room, so reinstalling did not help either: the GM clears it here.
+  useEffect(() => {
+    if (isGM && state.sceneReady && running && combatants.length === 0) void backend.setCombat(endCombat([]).combat);
+  }, [isGM, state.sceneReady, running, combatants.length]);
   const rollMany = async (onlyMissing: boolean) => {
     if (rolling) return;
     const needed = countRolls((rng) => rollPatches(combatants, rng, onlyMissing));
@@ -276,6 +291,11 @@ export function Initiative({ backend, state, throwDice, rolling, onOpenProfile }
             >
               {t("init.rollMissing")}
             </button>
+            {running && (
+              <button type="button" class="ghost" disabled={rolling} title={t("init.restartHelp")} onClick={restart}>
+                {t("init.restart")}
+              </button>
+            )}
             {running && (
               <button type="button" class="ghost danger" onClick={() => apply(endCombat(combatants))}>
                 {t("init.end")}

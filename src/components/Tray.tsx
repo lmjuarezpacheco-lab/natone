@@ -5,7 +5,7 @@ import { t } from "../i18n";
 import type { Prefs } from "../prefs";
 import type { RollEntry } from "../types";
 import { Help } from "./Help";
-import { RollLine } from "./RollLine";
+import { RollLog } from "./RollLog";
 
 interface Props {
   open: boolean;
@@ -119,23 +119,7 @@ export function Tray({ open, prefs, onPrefs, rolls, rolling, notice, onNotice, e
       </div>
       {notice && <p class="banner">{notice}</p>}
 
-      <h3 class="log-title">{t("tray.rolls")}</h3>
-      {rolls.length === 0 ? (
-        <p class="empty">{t("tray.noRolls")}</p>
-      ) : (
-        <ul class="log" tabIndex={0} aria-label={t("tray.log")}>
-          {rolls.map((r) => (
-            <li key={r.id}>
-              <span class="log-who">
-                <span class="dot" style={{ background: r.color }} />
-                {r.playerName}
-                {r.hidden && <span class="tag">{t("tray.hiddenTag")}</span>}
-              </span>
-              <RollLine roll={r} />
-            </li>
-          ))}
-        </ul>
-      )}
+      <RollLog rolls={rolls} />
     </aside>
   );
 }

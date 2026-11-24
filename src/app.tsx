@@ -3,6 +3,7 @@ import { Dice } from "./components/Dice";
 import { Initiative } from "./components/Initiative";
 import { Monsters } from "./components/Monsters";
 import { Tray } from "./components/Tray";
+import { RollLog } from "./components/RollLog";
 import { RollCleared, clearBox, resizeBox, roll3d } from "./dice/box";
 import { throwWithRng } from "./dice/notation";
 import { findTheme } from "./dice/themes";
@@ -288,6 +289,12 @@ export function App({ backend }: { backend: Backend }) {
         </section>
         <section class={`panel ${tab === "dice" ? "" : "hidden"}`} role="tabpanel">
           <Dice backend={backend} state={state} throwDice={throwDice} rolling={rolling} />
+          {/* With the tray closed the log would be out of sight: it shows here instead. */}
+          {!trayOpen && (
+            <div class="dice-log">
+              <RollLog rolls={state.rolls} />
+            </div>
+          )}
         </section>
         {isGM && (
           <section class={`panel ${tab === "monsters" ? "" : "hidden"}`} role="tabpanel">

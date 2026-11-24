@@ -695,6 +695,12 @@ button.icon:hover:not(:disabled) {
 .notation.invalid {
   border-color: var(--danger);
 }
+.dice-log {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 .log-title {
   margin: 6px 0 0;
   font-size: 12px;

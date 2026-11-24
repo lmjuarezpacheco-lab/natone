@@ -9,6 +9,7 @@ import {
   rollPatches,
   sanitizePlayerPatch,
   sortCombatants,
+  startCombat,
   applyPatches,
 } from "./logic";
 import type { Combatant, Settings } from "./types";
@@ -129,6 +130,21 @@ describe("rolls and combat end", () => {
     const step = endCombat(list);
     expect(step.combat).toEqual({ round: 0, activeId: null });
     expect(applyPatches(list, step.patches)[0]).toMatchObject({ initiative: null, bonus: 3 });
+  });
+  it("restarting goes back to round 1 at the top of the order and keeps every initiative", () => {
+    const list = [c("a", 9), c("b", 18), c("c", 12)];
+    const step = startCombat(list, standard, never);
+    expect(step.combat).toEqual({ round: 1, activeId: "b" });
+    expect(step.patches).toEqual({});
+  });
+  it("restarting with automatic re-roll only rolls who has no value", () => {
+    const list = [c("a", 9), c("b", null, 2)];
+    const step = startCombat(list, rerollAuto, () => 20);
+    expect(step.patches).toEqual({ b: { initiative: 22 } });
+    expect(step.combat).toEqual({ round: 1, activeId: "b" });
+  });
+  it("ending a combat with nobody in the tracker clears the round", () => {
+    expect(endCombat([]).combat).toEqual({ round: 0, activeId: null });
   });
 });
 
