@@ -41,27 +41,28 @@ body {
   font: 14px/1.4 Roboto, system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+html,
+body {
+  overflow: hidden;
+}
 :root {
   /* Keep in sync with app.tsx and the manifest in vite.config.ts. */
   --main-w: 380px;
   --handle-w: 24px;
   --tray-w: 300px;
 }
-:root.standalone .app {
-  /* Fixed left edge, so the main column does not move when the tray opens. */
-  width: fit-content;
-  margin-left: max(0px, calc((100vw - var(--main-w) - var(--handle-w) - var(--tray-w)) / 2));
-}
-/* Main column, then the tray handle on the right edge, then the tray while it is open. */
+/* The panel is always one fixed row: main column at 0, handle at 380, tray at 404. A narrower window clips
+   what is to the right and a wider one shows it, so when the host resizes the popover nothing moves. No
+   rule here may depend on the window width. */
 .app {
   position: relative;
   display: flex;
+  width: calc(var(--main-w) + var(--handle-w) + var(--tray-w));
   height: 100%;
   overflow: hidden;
   background: var(--paper);
 }
 .main {
-  /* Fixed width: the popover grows and shrinks around it, the column never reflows. */
   flex: none;
   width: var(--main-w);
   display: flex;
@@ -772,19 +773,9 @@ button.icon:hover:not(:disabled) {
   padding: 8px 12px 12px;
   border-left: 1px solid var(--line);
 }
-/* The tray grows out of the handle: the clip is what animates, the tray inside keeps its width. */
-.tray-clip {
-  flex: none;
-  width: 0;
-  overflow: hidden;
-  transition: width 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.app.tray-open .tray-clip {
-  width: var(--tray-w);
-}
-.app:not(.tray-open) .tray-panel {
+/* Closed for a while: the host has narrowed the window, so the tray is outside it. Hide it for good. */
+.app.tray-gone .tray-panel {
   visibility: hidden;
-  transition: visibility 0s 0.22s;
 }
 .tray-head {
   display: flex;
@@ -838,39 +829,35 @@ button.icon:hover:not(:disabled) {
   grid-column: 1 / -1;
 }
 
-/* Too narrow for panel and tray side by side: the tray slides over the panel. */
-@media (max-width: 703px) {
-  :root {
-    --tray-w: min(300px, calc(100vw - var(--handle-w) - 32px));
-  }
-  .main {
-    flex: 1 1 0;
-    width: auto;
-    margin-right: var(--handle-w);
-  }
-  .tray-clip {
-    width: var(--tray-w);
-    transition: none;
-  }
-  .drawer {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 20;
-    transform: translateX(var(--tray-w));
-    transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-  .app.tray-open .drawer {
-    /* "none" and not a zero offset: a transform would capture the fixed help bubbles. */
-    transform: none;
-    box-shadow: -14px 0 28px -14px rgba(0, 0, 0, 0.55);
-  }
+/* A window that cannot be widened (decided in code, see app.tsx): the tray slides over the main column. */
+.app.compact {
+  width: 100%;
+  --tray-w: min(300px, calc(100vw - var(--handle-w) - 32px));
+}
+.app.compact .main {
+  width: calc(100% - var(--handle-w));
+}
+.app.compact .drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  transform: translateX(var(--tray-w));
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.app.compact.tray-open .drawer {
+  /* "none" and not a zero offset: a transform would capture the fixed help bubbles. */
+  transform: none;
+  box-shadow: -14px 0 28px -14px rgba(0, 0, 0, 0.55);
+}
+.app.compact:not(.tray-open) .tray-panel {
+  visibility: hidden;
+  transition: visibility 0s 0.22s;
 }
 @media (prefers-reduced-motion: reduce) {
-  .drawer,
-  .tray-clip,
-  .app:not(.tray-open) .tray-panel {
+  .app.compact .drawer,
+  .app.compact:not(.tray-open) .tray-panel {
     transition: none;
   }
 }

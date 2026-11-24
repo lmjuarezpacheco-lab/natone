@@ -38,27 +38,11 @@ function useBackendState(backend: Backend): State {
   return state;
 }
 
-/** Resolves when the window is at least `width` wide, or after a short wait if the host gives less. */
-function widthReached(width: number): Promise<void> {
-  return new Promise((resolve) => {
-    if (window.innerWidth >= width) return resolve();
-    const done = () => {
-      clearTimeout(timer);
-      window.removeEventListener("resize", check);
-      resolve();
-    };
-    const check = () => window.innerWidth >= width && done();
-    const timer = setTimeout(done, 300);
-    window.addEventListener("resize", check);
-  });
-}
+/** How long the closed tray stays in place while the host shrinks the window, before it is hidden for good. */
+const HIDE_MS = 500;
 
-/** How long the tray takes to slide, a little over the 0.22 s of the stylesheet. Nothing when motion is reduced. */
-const TRAY_MS = 240;
-function pause(ms: number): Promise<void> {
-  const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  return new Promise((resolve) => setTimeout(resolve, reduced ? 0 : ms));
-}
+/** A window that cannot be widened: the preview alone in a narrow window, as on a phone. */
+const cannotWiden = (standalone: boolean) => standalone && window.parent === window && window.innerWidth < OPEN_WIDTH;
 
 export function App({ backend }: { backend: Backend }) {
   const state = useBackendState(backend);
@@ -67,6 +51,11 @@ export function App({ backend }: { backend: Backend }) {
   const [prefs, setPrefs] = useState<Prefs>(loadPrefs);
   // Follows `prefs.tray`, a moment later when the host must widen the panel first.
   const [trayOpen, setTrayOpen] = useState(false);
+  // Only for a window that cannot be widened: the tray then slides over the main column. Decided in code
+  // when the tray opens (and while it is closed), never by a media query that a host resize could flip.
+  const [compact, setCompact] = useState(() => cannotWiden(state.standalone));
+  // Some time after closing, the tray is out of the window for good and leaves the accessibility tree.
+  const [trayGone, setTrayGone] = useState(!prefs.tray);
   const [rolling, setRolling] = useState(false);
   const [trayNotice, setTrayNotice] = useState("");
   const [unread, setUnread] = useState(false);
@@ -97,57 +86,64 @@ export function App({ backend }: { backend: Backend }) {
     });
   };
 
-  // The tray and the popover change in steps: wide popover, then tray in; tray out, then narrow popover.
-  // `wanted` is where the clicks want to end, the rest is what is done so far. One loop walks there,
-  // so quick clicks cannot leave a half-open tray or a wide popover with the tray closed.
+  // The panel is always laid out 704 px wide: main column, handle, tray. Opening and closing only change
+  // the state and ask the host for the wide or the narrow window, whose own resize reveals or clips the
+  // tray. Nothing inside moves. The last click wins: the width asked from the host follows `wanted`.
   const wanted = useRef(prefs.tray);
-  const shown = useRef(false);
-  const hostWidth = useRef(CLOSED_WIDTH);
-  const syncing = useRef(false);
+  const widthSent = useRef(CLOSED_WIDTH);
+  const widthBusy = useRef(false);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const standaloneNow = useRef(state.standalone);
   standaloneNow.current = state.standalone;
-  const syncTray = async () => {
-    if (syncing.current) return;
-    syncing.current = true;
+  const pushWidth = async () => {
+    if (widthBusy.current) return;
+    widthBusy.current = true;
     try {
-      for (;;) {
-        if (wanted.current) {
-          if (hostWidth.current !== OPEN_WIDTH) {
-            hostWidth.current = OPEN_WIDTH;
-            await backend.setPanelWidth?.(OPEN_WIDTH).catch(() => {});
-            if (!standaloneNow.current) await widthReached(OPEN_WIDTH);
-          } else if (!shown.current) {
-            shown.current = true;
-            setUnread(false);
-            setTrayOpen(true);
-            await pause(TRAY_MS);
-          } else break;
-        } else if (shown.current) {
-          shown.current = false;
-          // Dice that are still rolling finish out of sight: their result is already owed to a roll.
-          if (pending.current === 0) clearBox();
-          setTrayNotice("");
-          setTrayOpen(false);
-          await pause(TRAY_MS);
-        } else if (hostWidth.current !== CLOSED_WIDTH) {
-          hostWidth.current = CLOSED_WIDTH;
-          await backend.setPanelWidth?.(CLOSED_WIDTH).catch(() => {});
-        } else break;
+      while (widthSent.current !== (wanted.current ? OPEN_WIDTH : CLOSED_WIDTH)) {
+        widthSent.current = wanted.current ? OPEN_WIDTH : CLOSED_WIDTH;
+        await backend.setPanelWidth?.(widthSent.current).catch(() => {});
       }
     } finally {
-      syncing.current = false;
+      widthBusy.current = false;
     }
+  };
+  const applyTray = (open: boolean) => {
+    wanted.current = open;
+    clearTimeout(hideTimer.current);
+    if (open) {
+      setCompact(cannotWiden(standaloneNow.current));
+      setTrayGone(false);
+      setUnread(false);
+    } else {
+      // Dice that are still rolling finish out of sight: their result is already owed to a roll.
+      if (pending.current === 0) clearBox();
+      setTrayNotice("");
+      hideTimer.current = setTimeout(() => {
+        setTrayGone(true);
+        setCompact(cannotWiden(standaloneNow.current));
+      }, HIDE_MS);
+    }
+    setTrayOpen(open);
+    void pushWidth();
   };
   const toggleTray = () => {
     const open = !wanted.current;
-    wanted.current = open;
     updatePrefs({ tray: open });
-    void syncTray();
+    applyTray(open);
   };
 
   // A tray that was open last time opens again.
   useEffect(() => {
-    if (wanted.current) void syncTray();
+    if (wanted.current) applyTray(true);
+  }, []);
+
+  // A preview window that the user resizes while the tray is closed may switch between the two layouts.
+  useEffect(() => {
+    const onResize = () => {
+      if (!wanted.current && standaloneNow.current) setCompact(cannotWiden(true));
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   // The 3D world follows the size of the tray.
@@ -219,7 +215,7 @@ export function App({ backend }: { backend: Backend }) {
   };
 
   return (
-    <div class={`app ${trayOpen ? "tray-open" : ""}`}>
+    <div class={`app ${trayOpen ? "tray-open" : ""} ${trayGone ? "tray-gone" : ""} ${compact ? "compact" : ""}`}>
       <div class="main">
         <nav class="tabs" role="tablist">
           <button type="button" role="tab" aria-selected={tab === "initiative"} onClick={() => setTab("initiative")}>
@@ -291,7 +287,6 @@ export function App({ backend }: { backend: Backend }) {
           {unread && <span class="tray-handle-dot" aria-hidden="true" />}
         </button>
         {/* Stays mounted while closed: the 3D engine keeps its canvas inside. */}
-        <div class="tray-clip">
         <Tray
           open={trayOpen}
           prefs={prefs}
@@ -302,7 +297,6 @@ export function App({ backend }: { backend: Backend }) {
           onNotice={setTrayNotice}
           exclusive={exclusive}
         />
-        </div>
       </div>
     </div>
   );
