@@ -4,6 +4,7 @@ import { ownerOf, readItemData, setActive, writePatch } from "./backend/items";
 import { syncTurnMarker } from "./backend/turnMarker";
 import { CH_REQUEST, CH_ROLL, ID, KEY_ITEM, KEY_SETTINGS } from "./constants";
 import { appendHistory, parseRolls } from "./history";
+import { t } from "./i18n";
 import { readSettings, sanitizePlayerPatch } from "./logic";
 import { loadPrefs } from "./prefs";
 
@@ -15,7 +16,7 @@ function setupContextMenu(): void {
     icons: [
       {
         icon: asset("add.svg"),
-        label: "Agregar a iniciativa",
+        label: t("menu.add"),
         filter: {
           permissions: ["UPDATE"],
           every: [
@@ -26,7 +27,7 @@ function setupContextMenu(): void {
       },
       {
         icon: asset("remove.svg"),
-        label: "Quitar de iniciativa",
+        label: t("menu.remove"),
         filter: { permissions: ["UPDATE"], every: [{ key: "layer", value: "CHARACTER" }] },
       },
     ],

@@ -11,6 +11,7 @@ import {
   profileToDraft,
 } from "../monsters/homebrew";
 import { ABILITIES, type Ability, type Profile, abilityModifier } from "../monsters/types";
+import { t } from "../i18n";
 
 interface Props {
   /** Sheet to edit, or null for a new one. */
@@ -19,7 +20,7 @@ interface Props {
   onCancel: () => void;
 }
 
-const ABILITY_LABEL: Record<Ability, string> = { str: "FUE", dex: "DES", con: "CON", int: "INT", wis: "SAB", cha: "CAR" };
+const abilityLabel = (ability: Ability) => t(`ability.${ability}`);
 const signed = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
 
 export function Editor({ initial, onSave, onCancel }: Props) {
@@ -53,7 +54,7 @@ export function Editor({ initial, onSave, onCancel }: Props) {
     try {
       await onSave(result.profile);
     } catch {
-      setErrors(["No se pudo guardar en este navegador."]);
+      setErrors([t("ed.saveFailed")]);
       setSaving(false);
     }
   };
@@ -71,19 +72,19 @@ export function Editor({ initial, onSave, onCancel }: Props) {
       }}
     >
       <div class="statusbar">
-        <strong class="round">{initial ? "Editar hoja" : "Nuevo monstruo"}</strong>
+        <strong class="round">{initial ? t("ed.titleEdit") : t("mon.new")}</strong>
         <button type="button" class="ghost" onClick={onCancel}>
-          Cancelar
+          {t("common.cancel")}
         </button>
       </div>
 
       <label class="f">
-        Nombre
+        {t("ed.name")}
         <input type="text" {...field("name")} />
       </label>
       <div class="form-row">
         <label class="f grow">
-          Tamaño y tipo
+          {t("ed.kind")}
           <input type="text" placeholder="Medium beast" {...field("kind")} />
         </label>
         <label class="f short">
@@ -93,71 +94,71 @@ export function Editor({ initial, onSave, onCancel }: Props) {
       </div>
       <div class="form-row">
         <label class="f short">
-          CA
+          {t("stat.ac")}
           <input type="text" inputMode="numeric" {...field("ac")} />
         </label>
         <label class="f grow">
-          Nota de CA
+          {t("ed.acNote")}
           <input type="text" placeholder="natural armor" {...field("acNote")} />
         </label>
       </div>
       <div class="form-row">
         <label class="f short">
-          PG
+          {t("stat.hp")}
           <input type="text" inputMode="numeric" {...field("hp")} />
         </label>
         <label class="f grow">
-          Dados de golpe
+          {t("ed.hitDice")}
           <input type="text" placeholder="5d8 + 15" {...field("hpFormula")} />
         </label>
       </div>
       <div class="form-row">
         <label class="f grow">
-          Velocidad
+          {t("ed.speed")}
           <input type="text" {...field("speed")} />
         </label>
         <label class="f short">
-          Iniciativa
+          {t("ed.initiative")}
           <input type="text" inputMode="numeric" placeholder={signed(modifierOf("dex"))} {...field("initiative")} />
         </label>
       </div>
 
       <fieldset class="ability-editor">
-        <legend>Características y salvaciones</legend>
+        <legend>{t("ed.abilities")}</legend>
         {ABILITIES.map((ability) => (
           <div class="ability-edit" key={ability}>
-            <span class="ability-name">{ABILITY_LABEL[ability]}</span>
+            <span class="ability-name">{abilityLabel(ability)}</span>
             <input
               type="text"
               inputMode="numeric"
-              aria-label={`Puntuación de ${ABILITY_LABEL[ability]}`}
+              aria-label={t("ed.scoreOf", { ability: abilityLabel(ability) })}
               value={draft.abilities[ability]}
               onInput={(e) => set({ abilities: { ...draft.abilities, [ability]: e.currentTarget.value } })}
             />
             <input
               type="text"
               inputMode="numeric"
-              aria-label={`Salvación de ${ABILITY_LABEL[ability]}`}
-              placeholder={`S ${signed(modifierOf(ability))}`}
+              aria-label={t("ed.saveOf", { ability: abilityLabel(ability) })}
+              placeholder={`${t("mon.saveShort")} ${signed(modifierOf(ability))}`}
               value={draft.saves[ability]}
               onInput={(e) => set({ saves: { ...draft.saves, [ability]: e.currentTarget.value } })}
             />
           </div>
         ))}
-        <p class="field-help">Fila de abajo: salvación. Vacía usa el modificador. Iniciativa vacía usa Destreza.</p>
+        <p class="field-help">{t("ed.abilityHelp")}</p>
       </fieldset>
 
       <label class="f">
-        Habilidades
+        {t("ed.skills")}
         <input type="text" placeholder="stealth +6, perception +4" {...field("skills")} />
       </label>
 
-      <h3 class="log-title">Rasgos y acciones</h3>
+      <h3 class="log-title">{t("ed.features")}</h3>
       {draft.features.map((feature, index) => (
         <div class="feature-edit" key={index}>
           <div class="form-row">
             <label class="f grow">
-              Sección
+              {t("ed.section")}
               <select value={feature.section} onChange={(e) => setFeature(index, { section: e.currentTarget.value })}>
                 {sectionOptions.map((title) => (
                   <option key={title} value={title}>
@@ -169,19 +170,19 @@ export function Editor({ initial, onSave, onCancel }: Props) {
             <button
               type="button"
               class="ghost danger"
-              aria-label={`Quitar ${feature.name || "rasgo o acción"}`}
+              aria-label={t("ed.removeFeature", { name: feature.name || t("ed.featureFallback") })}
               onClick={() => set({ features: draft.features.filter((_, i) => i !== index) })}
             >
-              Quitar
+              {t("common.remove")}
             </button>
           </div>
           <label class="f">
-            Nombre
+            {t("ed.name")}
             <input type="text" value={feature.name} onInput={(e) => setFeature(index, { name: e.currentTarget.value })} />
           </label>
           <div class="form-row">
             <label class="f short">
-              Ataque
+              {t("ed.attack")}
               <input
                 type="text"
                 inputMode="numeric"
@@ -191,7 +192,7 @@ export function Editor({ initial, onSave, onCancel }: Props) {
               />
             </label>
             <label class="f grow">
-              Daño
+              {t("ed.damage")}
               <input
                 type="text"
                 placeholder="2d6 + 3 piercing, 1d6 fire"
@@ -201,7 +202,7 @@ export function Editor({ initial, onSave, onCancel }: Props) {
             </label>
           </div>
           <label class="f">
-            Descripción
+            {t("ed.description")}
             <textarea rows={3} value={feature.text} onInput={(e) => setFeature(index, { text: e.currentTarget.value })} />
           </label>
         </div>
@@ -210,7 +211,7 @@ export function Editor({ initial, onSave, onCancel }: Props) {
         type="button"
         onClick={() => set({ features: [...draft.features, emptyFeature(draft.features.at(-1)?.section)] })}
       >
-        Agregar rasgo o acción
+        {t("ed.addFeature")}
       </button>
 
       {errors.length > 0 && (
@@ -221,7 +222,7 @@ export function Editor({ initial, onSave, onCancel }: Props) {
         </ul>
       )}
       <button type="submit" class="primary wide" disabled={saving}>
-        {saving ? "Guardando…" : "Guardar hoja"}
+        {saving ? t("ed.saving") : t("ed.save")}
       </button>
     </form>
   );

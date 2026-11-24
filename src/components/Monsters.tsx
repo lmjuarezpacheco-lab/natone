@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { makeEntry } from "../dice/entry";
 import { type Adv, type Pool, diceToThrow, parseNotation } from "../dice/notation";
 import type { ThrowDice } from "../dice/throw";
+import { type Key, plural, t } from "../i18n";
 import { buildBackup, isBackup, isHomebrew, parseBackup } from "../monsters/homebrew";
 import { clearLibrary, deleteProfile, getProfile, listHomebrew, listSummaries, saveProfiles } from "../monsters/library";
 import { parseMonsterFile } from "../monsters/parse5etools";
@@ -23,8 +24,8 @@ interface Props {
 }
 
 const LIST_LIMIT = 80;
-const ABILITY_LABEL: Record<Ability, string> = { str: "FUE", dex: "DES", con: "CON", int: "INT", wis: "SAB", cha: "CAR" };
-const ADV_LABEL: Record<Adv, string> = { normal: "Normal", adv: "Ventaja", dis: "Desventaja" };
+const abilityLabel = (ability: Ability) => t(`ability.${ability}`);
+const ADV_LABEL: Record<Adv, Key> = { normal: "adv.normal", adv: "dice.advantage", dis: "dice.disadvantage" };
 const signed = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
 const d20 = (modifier: number): Pool => ({ counts: { 20: 1 }, modifier });
 
@@ -58,19 +59,19 @@ export function Monsters({ backend, state, throwDice, rolling, openId, onOpen }:
         imported += parsed.profiles.length;
         skipped += parsed.skipped;
       } catch (error) {
-        const reason = error instanceof SyntaxError ? "no es JSON válido" : error instanceof Error ? error.message : "error";
+        const reason = error instanceof SyntaxError ? t("mon.notJson") : error instanceof Error ? error.message : t("mon.error");
         problems.push(`${file.name}: ${reason}`);
       }
     }
-    const parts = [`${imported} ${imported === 1 ? "monstruo importado" : "monstruos importados"}.`];
-    if (skipped > 0) parts.push(`${skipped} ${skipped === 1 ? "omitido" : "omitidos"} por depender de otro archivo o no tener datos.`);
+    const parts = [plural(imported, "mon.importedOne", "mon.importedMany", { n: imported })];
+    if (skipped > 0) parts.push(plural(skipped, "mon.skippedOne", "mon.skippedMany", { n: skipped }));
     parts.push(...problems);
     setStatus(parts.join(" "));
     await refresh();
   };
 
   if (storageError) {
-    return <p class="empty">Este navegador bloquea el almacenamiento local. La biblioteca de monstruos no puede guardarse.</p>;
+    return <p class="empty">{t("mon.storageBlocked")}</p>;
   }
 
   const exportHomebrew = async () => {
@@ -81,7 +82,7 @@ export function Monsters({ backend, state, throwDice, rolling, openId, onOpen }:
     link.download = "natone-homebrew.json";
     link.click();
     URL.revokeObjectURL(url);
-    setStatus(`${sheets.length} ${sheets.length === 1 ? "hoja homebrew exportada" : "hojas homebrew exportadas"}.`);
+    setStatus(plural(sheets.length, "mon.exportedOne", "mon.exportedMany", { n: sheets.length }));
   };
 
   if (editing !== null) {
@@ -129,7 +130,7 @@ export function Monsters({ backend, state, throwDice, rolling, openId, onOpen }:
     <div class="monsters">
       <div class="monster-toolbar">
         <button type="button" class="primary" onClick={() => fileInput.current?.click()}>
-          Importar JSON
+          {t("mon.import")}
         </button>
         <input
           ref={fileInput}
@@ -144,24 +145,24 @@ export function Monsters({ backend, state, throwDice, rolling, openId, onOpen }:
           }}
         />
         <button type="button" onClick={() => setEditing("new")}>
-          Nuevo monstruo
+          {t("mon.new")}
         </button>
-        <span class="muted count">{summaries ? `${summaries.length} ${summaries.length === 1 ? "hoja" : "hojas"}` : "Cargando…"}</span>
+        <span class="muted count">{summaries ? plural(summaries.length, "mon.sheetsOne", "mon.sheetsMany", { n: summaries.length }) : t("common.loading")}</span>
       </div>
       {status && <p class="banner">{status}</p>}
 
       {summaries && summaries.length === 0 ? (
         <p class="empty">
-          Biblioteca vacía. Crea un monstruo o importa un archivo en formato 5etools (por ejemplo{" "}
-          <code>bestiary-*.json</code>). Las hojas se guardan solo en este navegador.
+          {t("mon.emptyBefore")} <code>bestiary-*.json</code>
+          {t("mon.emptyAfter")}
         </p>
       ) : (
         <>
           <input
             class="search"
             type="text"
-            aria-label="Buscar monstruo"
-            placeholder="Buscar por nombre o fuente"
+            aria-label={t("mon.search")}
+            placeholder={t("mon.searchPlaceholder")}
             value={query}
             onInput={(e) => setQuery(e.currentTarget.value)}
           />
@@ -180,14 +181,14 @@ export function Monsters({ backend, state, throwDice, rolling, openId, onOpen }:
             ))}
           </ul>
           {matches.length > LIST_LIMIT && (
-            <p class="hint">Y {matches.length - LIST_LIMIT} más. Escribe más letras para acotar.</p>
+            <p class="hint">{t("mon.more", { n: matches.length - LIST_LIMIT })}</p>
           )}
-          {summaries && matches.length === 0 && <p class="empty">Sin resultados.</p>}
+          {summaries && matches.length === 0 && <p class="empty">{t("mon.noResults")}</p>}
           {summaries && summaries.length > 0 && (
             <div class="minor-buttons">
               {summaries.some((s) => isHomebrew(s.id)) && (
                 <button type="button" class="ghost" onClick={exportHomebrew}>
-                  Exportar homebrew
+                  {t("mon.export")}
                 </button>
               )}
               {confirmClear ? (
@@ -198,19 +199,19 @@ export function Monsters({ backend, state, throwDice, rolling, openId, onOpen }:
                     onClick={async () => {
                       await clearLibrary();
                       setConfirmClear(false);
-                      setStatus("Biblioteca vaciada.");
+                      setStatus(t("mon.cleared"));
                       await refresh();
                     }}
                   >
-                    Sí, borrar las {summaries.length} hojas
+                    {t("mon.confirmClear", { n: summaries.length })}
                   </button>
                   <button type="button" class="ghost" onClick={() => setConfirmClear(false)}>
-                    Cancelar
+                    {t("common.cancel")}
                   </button>
                 </>
               ) : (
                 <button type="button" class="ghost danger" onClick={() => setConfirmClear(true)}>
-                  Vaciar biblioteca
+                  {t("mon.clear")}
                 </button>
               )}
             </div>
@@ -246,14 +247,14 @@ function Sheet({ id, backend, state, throwDice, rolling, onBack, onDeleted, onEd
       .catch(() => setProfile(null));
   }, [id]);
 
-  if (profile === undefined) return <p class="empty">Cargando…</p>;
+  if (profile === undefined) return <p class="empty">{t("common.loading")}</p>;
   if (profile === null) {
     return (
       <div class="monsters">
         <button type="button" class="ghost" onClick={onBack}>
-          ← Biblioteca
+          {t("mon.back")}
         </button>
-        <p class="empty">Esta hoja no está en la biblioteca de este navegador. Importa de nuevo su archivo.</p>
+        <p class="empty">{t("mon.missing")}</p>
       </div>
     );
   }
@@ -271,19 +272,19 @@ function Sheet({ id, backend, state, throwDice, rolling, onBack, onDeleted, onEd
     const pool = parseNotation(notation);
     if (!pool) return;
     const counts = crit ? Object.fromEntries(Object.entries(pool.counts).map(([sides, n]) => [sides, n * 2])) : pool.counts;
-    void roll(`${feature.name}${crit ? " (crítico)" : ""}`, { ...pool, counts }, false);
+    void roll(`${feature.name}${crit ? ` (${t("roll.critical")})` : ""}`, { ...pool, counts }, false);
   };
   const assign = async () => {
     const ids = await backend.getSelection();
     if (ids.length === 0) {
-      setStatus("Selecciona uno o más tokens en el mapa primero.");
+      setStatus(t("mon.selectFirst"));
       return;
     }
     const changed = await backend.assignProfile(ids, profile.id, profile.initiative);
     setStatus(
       changed > 0
-        ? `Hoja asignada a ${changed} ${changed === 1 ? "token" : "tokens"}. Iniciativa ${signed(profile.initiative)}, ya en el tracker.`
-        : "La selección no tiene tokens de personaje.",
+        ? plural(changed, "mon.assignedOne", "mon.assignedMany", { n: changed, bonus: signed(profile.initiative) })
+        : t("mon.noTokens"),
     );
   };
 
@@ -293,11 +294,11 @@ function Sheet({ id, backend, state, throwDice, rolling, onBack, onDeleted, onEd
     <div class={`monsters sheet ${rolling ? "busy" : ""}`}>
       <div class="statusbar">
         <button type="button" class="ghost" onClick={onBack}>
-          ← Biblioteca
+          {t("mon.back")}
         </button>
         <span>
           <button type="button" class="ghost" onClick={() => onEdit(profile)}>
-            Editar
+            {t("mon.edit")}
           </button>
           <button
             type="button"
@@ -307,7 +308,7 @@ function Sheet({ id, backend, state, throwDice, rolling, onBack, onDeleted, onEd
               onDeleted();
             }}
           >
-            Borrar hoja
+            {t("mon.delete")}
           </button>
         </span>
       </div>
@@ -321,29 +322,29 @@ function Sheet({ id, backend, state, throwDice, rolling, onBack, onDeleted, onEd
 
       <div class="result" aria-live="polite">
         {rolling ? (
-          <span class="muted">Tirando…</span>
+          <span class="muted">{t("common.rolling")}</span>
         ) : last ? (
           <RollLine roll={last} big />
         ) : (
-          <span class="muted">Pulsa un valor para tirar.</span>
+          <span class="muted">{t("mon.prompt")}</span>
         )}
       </div>
 
       <dl class="stat-line">
         <div>
-          <dt>CA</dt>
+          <dt>{t("stat.ac")}</dt>
           <dd>
             {profile.ac ?? "–"}
             {profile.acNote && <small> ({profile.acNote})</small>}
           </dd>
         </div>
         <div>
-          <dt>PG</dt>
+          <dt>{t("stat.hp")}</dt>
           <dd>
             {profile.hp ?? "–"}{" "}
             {profile.hpFormula &&
               (hpPool ? (
-                <button type="button" class="chip" title="Tirar puntos de golpe" onClick={() => roll("Puntos de golpe", hpPool, false)}>
+                <button type="button" class="chip" title={t("mon.rollHitPoints")} onClick={() => roll(t("roll.hitPoints"), hpPool, false)}>
                   {profile.hpFormula}
                 </button>
               ) : (
@@ -352,27 +353,27 @@ function Sheet({ id, backend, state, throwDice, rolling, onBack, onDeleted, onEd
           </dd>
         </div>
         <div>
-          <dt>Inic.</dt>
+          <dt>{t("stat.init")}</dt>
           <dd>{signed(profile.initiative)}</dd>
         </div>
         {profile.speed && (
           <div class="full">
-            <dt>Vel.</dt>
+            <dt>{t("stat.speed")}</dt>
             <dd>{profile.speed}</dd>
           </div>
         )}
       </dl>
 
       <button type="button" onClick={assign}>
-        Asignar a tokens seleccionados
+        {t("mon.assign")}
       </button>
       {status && <p class="banner">{status}</p>}
 
       <div class="roll-row">
-        <div class="segmented small" role="group" aria-label="Ventaja">
+        <div class="segmented small" role="group" aria-label={t("dice.advantage")}>
           {(["normal", "adv", "dis"] as const).map((value) => (
             <button key={value} type="button" class={adv === value ? "on" : ""} aria-pressed={adv === value} onClick={() => setAdv(value)}>
-              {ADV_LABEL[value]}
+              {t(ADV_LABEL[value])}
             </button>
           ))}
         </div>
@@ -380,13 +381,13 @@ function Sheet({ id, backend, state, throwDice, rolling, onBack, onDeleted, onEd
       <div class="roll-row">
         <label class="check">
           <input type="checkbox" checked={crit} onChange={(e) => setCrit(e.currentTarget.checked)} />
-          Daño crítico
-          <Help text="Duplica los dados de daño. El modificador no se duplica." />
+          {t("mon.critical")}
+          <Help text={t("mon.criticalHelp")} />
         </label>
         <label class="check">
           <input type="checkbox" checked={hidden} onChange={(e) => setHidden(e.currentTarget.checked)} />
-          Tiradas ocultas
-          <Help text="Las tiradas de esta hoja no se comparten con los jugadores." />
+          {t("mon.hiddenRolls")}
+          <Help text={t("mon.hiddenRollsHelp")} />
         </label>
       </div>
 
@@ -397,23 +398,23 @@ function Sheet({ id, backend, state, throwDice, rolling, onBack, onDeleted, onEd
           return (
             <div class="ability" key={ability}>
               <span class="ability-name">
-                {ABILITY_LABEL[ability]} <small>{profile.abilities[ability]}</small>
+                {abilityLabel(ability)} <small>{profile.abilities[ability]}</small>
               </span>
               <button
                 type="button"
                 class="chip"
-                aria-label={`Prueba de ${ABILITY_LABEL[ability]} ${signed(modifier)}`}
-                onClick={() => roll(`Prueba ${ABILITY_LABEL[ability]}`, d20(modifier), true)}
+                aria-label={t("mon.checkOf", { ability: abilityLabel(ability), bonus: signed(modifier) })}
+                onClick={() => roll(t("roll.check", { ability: abilityLabel(ability) }), d20(modifier), true)}
               >
                 {signed(modifier)}
               </button>
               <button
                 type="button"
                 class={`chip ${ability in profile.saves ? "strong" : ""}`}
-                aria-label={`Salvación de ${ABILITY_LABEL[ability]} ${signed(save)}`}
-                onClick={() => roll(`Salvación ${ABILITY_LABEL[ability]}`, d20(save), true)}
+                aria-label={t("mon.saveOf", { ability: abilityLabel(ability), bonus: signed(save) })}
+                onClick={() => roll(t("roll.save", { ability: abilityLabel(ability) }), d20(save), true)}
               >
-                S {signed(save)}
+                {t("mon.saveShort")} {signed(save)}
               </button>
             </div>
           );
@@ -442,8 +443,8 @@ function Sheet({ id, backend, state, throwDice, rolling, onBack, onDeleted, onEd
               {(feature.hit !== null || feature.damage.length > 0) && (
                 <div class="chips">
                   {feature.hit !== null && (
-                    <button type="button" class="chip strong" onClick={() => roll(`${feature.name} (ataque)`, d20(feature.hit!), true)}>
-                      Ataque {signed(feature.hit)}
+                    <button type="button" class="chip strong" onClick={() => roll(`${feature.name} (${t("roll.attack")})`, d20(feature.hit!), true)}>
+                      {t("mon.attack", { bonus: signed(feature.hit) })}
                     </button>
                   )}
                   {feature.damage.map((damage, i) =>

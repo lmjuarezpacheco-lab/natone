@@ -3,6 +3,7 @@
 // client never draws it for a token that is hidden from players.
 import OBR, { type Item, buildPath } from "@owlbear-rodeo/sdk";
 import { ID, KEY_COMBAT, KEY_SETTINGS } from "../constants";
+import { t } from "../i18n";
 import { readCombat, readSettings } from "../logic";
 import { markerShape } from "../marker";
 import { readItemData } from "./items";
@@ -62,7 +63,7 @@ async function sync(): Promise<void> {
   const build = (attach: boolean) =>
     layers.map((layer) => {
       const builder = buildPath()
-        .name("Turno")
+        .name(t("marker.name"))
         .commands(shape.commands)
         .fillOpacity(0)
         .strokeColor(layer.color)

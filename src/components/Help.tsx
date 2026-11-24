@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "preact/hooks";
+import { t } from "../i18n";
 
 const WIDTH = 240;
 const EDGE = 8;
@@ -42,7 +43,7 @@ export function Help({ text }: { text: string }) {
         ref={button}
         type="button"
         class="help-button"
-        aria-label={`Ayuda: ${text}`}
+        aria-label={t("help.label", { text })}
         aria-expanded={open}
         onMouseEnter={show}
         onMouseLeave={hide}

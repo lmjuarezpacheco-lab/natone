@@ -2,6 +2,7 @@ import { useState } from "preact/hooks";
 import { initiativeEntries } from "../dice/entry";
 import { cryptoRng } from "../dice/notation";
 import { type ThrowDice, throwD20s } from "../dice/throw";
+import { plural, t } from "../i18n";
 import {
   BONUS_RANGE,
   INITIATIVE_RANGE,
@@ -78,22 +79,22 @@ export function Initiative({ backend, state, throwDice, rolling, onOpenProfile }
   };
 
   const primaryLabel = !running
-    ? "Iniciar combate"
+    ? t("init.start")
     : waiting
-      ? "Empezar ronda"
+      ? t("init.startRound")
       : isLastTurn
-        ? "Siguiente ronda"
-        : "Siguiente turno";
+        ? t("init.nextRound")
+        : t("init.nextTurn");
 
   if (!state.sceneReady) {
-    return <p class="empty">Abre una escena para usar la iniciativa.</p>;
+    return <p class="empty">{t("init.noScene")}</p>;
   }
 
   return (
     <div class="initiative">
       <div class="statusbar">
         <div>
-          <strong class="round">{running ? `Ronda ${combat.round}` : "Sin combate"}</strong>
+          <strong class="round">{running ? t("init.round", { n: combat.round }) : t("init.noCombat")}</strong>
           <span class="mode">{modeLabel(settings)}</span>
         </div>
         {isGM && (
@@ -103,7 +104,7 @@ export function Initiative({ backend, state, throwDice, rolling, onOpenProfile }
             aria-expanded={showSettings}
             onClick={() => setShowSettings(!showSettings)}
           >
-            Ajustes
+            {t("init.settings")}
           </button>
         )}
       </div>
@@ -113,22 +114,22 @@ export function Initiative({ backend, state, throwDice, rolling, onOpenProfile }
       {waiting && combatants.length > 0 && (
         <p class="banner">
           {missing > 0
-            ? `Ronda ${combat.round}: faltan ${missing} ${missing === 1 ? "iniciativa" : "iniciativas"}.`
-            : `Ronda ${combat.round}: iniciativas listas.`}
+            ? plural(missing, "init.missingOne", "init.missingMany", { n: combat.round, count: missing })
+            : t("init.ready", { n: combat.round })}
         </p>
       )}
 
       {list.length === 0 ? (
         <p class="empty">
-          Sin participantes. Clic derecho en un token del mapa y elige <em>Agregar a iniciativa</em>.
+          {t("init.emptyBefore")} <em>{t("menu.add")}</em>.
         </p>
       ) : (
         <>
           <div class="row header" aria-hidden="true">
             <span />
-            <span>Nombre</span>
-            <span class="col-num">Bonif.</span>
-            <span class="col-num">Inic.</span>
+            <span>{t("init.colName")}</span>
+            <span class="col-num">{t("init.colBonus")}</span>
+            <span class="col-num">{t("init.colInit")}</span>
             <span />
           </div>
           <ul class="rows">
@@ -145,15 +146,15 @@ export function Initiative({ backend, state, throwDice, rolling, onOpenProfile }
                     <span class="who">
                       <span class="name">{c.name}</span>
                       <span class="owner">
-                        {active && <b>En turno · </b>}
-                        {c.ownerId === me.id ? "Tuyo" : (owner?.name ?? "Sin jugador conectado")}
-                        {!c.visible && " · oculto"}
-                        {isGM && c.profileId && " · con hoja"}
+                        {active && <b>{t("init.acting")} · </b>}
+                        {c.ownerId === me.id ? t("init.yours") : (owner?.name ?? t("init.noPlayer"))}
+                        {!c.visible && ` · ${t("init.hidden")}`}
+                        {isGM && c.profileId && ` · ${t("init.hasSheet")}`}
                       </span>
                     </span>
                     {editable ? (
                       <NumField
-                        label={`Bonificador de ${c.name}`}
+                        label={t("init.bonusOf", { name: c.name })}
                         value={c.bonus}
                         signed
                         min={BONUS_RANGE.min}
@@ -165,7 +166,7 @@ export function Initiative({ backend, state, throwDice, rolling, onOpenProfile }
                     )}
                     {editable ? (
                       <NumField
-                        label={`Iniciativa de ${c.name}`}
+                        label={t("init.initiativeOf", { name: c.name })}
                         value={c.initiative}
                         allowEmpty
                         placeholder="–"
@@ -181,8 +182,8 @@ export function Initiative({ backend, state, throwDice, rolling, onOpenProfile }
                         <button
                           type="button"
                           class="icon"
-                          title={`Tirar d20 ${formatBonus(c.bonus)}`}
-                          aria-label={`Tirar iniciativa de ${c.name}`}
+                          title={t("init.rollD20", { bonus: formatBonus(c.bonus) })}
+                          aria-label={t("init.rollFor", { name: c.name })}
                           disabled={rolling}
                           onClick={() => rollFor(c)}
                         >
@@ -193,7 +194,7 @@ export function Initiative({ backend, state, throwDice, rolling, onOpenProfile }
                         <button
                           type="button"
                           class={`icon ${openRow === c.id ? "on" : ""}`}
-                          aria-label={`Opciones de ${c.name}`}
+                          aria-label={t("init.optionsOf", { name: c.name })}
                           aria-expanded={openRow === c.id}
                           onClick={() => setOpenRow(openRow === c.id ? null : c.id)}
                         >
@@ -205,12 +206,12 @@ export function Initiative({ backend, state, throwDice, rolling, onOpenProfile }
                   {isGM && openRow === c.id && (
                     <div class="row-detail">
                       <label>
-                        Jugador
+                        {t("init.player")}
                         <select
                           value={c.ownerId}
                           onChange={(e) => backend.patchCombatants({ [c.id]: { ownerId: e.currentTarget.value } })}
                         >
-                          {!owner && <option value={c.ownerId}>Sin jugador conectado</option>}
+                          {!owner && <option value={c.ownerId}>{t("init.noPlayer")}</option>}
                           {players.map((p) => (
                             <option key={p.id} value={p.id}>
                               {p.name}
@@ -221,12 +222,12 @@ export function Initiative({ backend, state, throwDice, rolling, onOpenProfile }
                       </label>
                       {c.profileId && (
                         <button type="button" onClick={() => onOpenProfile(c.profileId!)}>
-                          Ver hoja
+                          {t("init.viewSheet")}
                         </button>
                       )}
                       {running && !active && (
                         <button type="button" onClick={() => backend.setCombat({ ...combat, activeId: c.id })}>
-                          Dar turno
+                          {t("init.giveTurn")}
                         </button>
                       )}
                       <button
@@ -237,7 +238,7 @@ export function Initiative({ backend, state, throwDice, rolling, onOpenProfile }
                           void backend.removeCombatants([c.id]);
                         }}
                       >
-                        Quitar
+                        {t("common.remove")}
                       </button>
                     </div>
                   )}
@@ -252,10 +253,10 @@ export function Initiative({ backend, state, throwDice, rolling, onOpenProfile }
         <div class="controls">
           <div class="turn-buttons">
             <button type="button" disabled={!running || waiting} onClick={previous}>
-              Anterior
+              {t("init.previous")}
             </button>
             <button type="button" class="primary" disabled={rolling} onClick={next}>
-              {rolling ? "Tirando…" : primaryLabel}
+              {rolling ? t("common.rolling") : primaryLabel}
             </button>
           </div>
           <div class="minor-buttons">
@@ -265,7 +266,7 @@ export function Initiative({ backend, state, throwDice, rolling, onOpenProfile }
               disabled={rolling}
               onClick={() => rollMany(false)}
             >
-              Tirar todos
+              {t("init.rollAll")}
             </button>
             <button
               type="button"
@@ -273,11 +274,11 @@ export function Initiative({ backend, state, throwDice, rolling, onOpenProfile }
               disabled={missing === 0 || rolling}
               onClick={() => rollMany(true)}
             >
-              Tirar faltantes
+              {t("init.rollMissing")}
             </button>
             {running && (
               <button type="button" class="ghost danger" onClick={() => apply(endCombat(combatants))}>
-                Terminar
+                {t("init.end")}
               </button>
             )}
           </div>
@@ -287,8 +288,8 @@ export function Initiative({ backend, state, throwDice, rolling, onOpenProfile }
       {!isGM && (
         <p class="hint">
           {settings.playersEditOwn
-            ? "Puedes cambiar la iniciativa y el bonificador de tus propios tokens."
-            : "Solo el GM puede cambiar iniciativas."}
+            ? t("init.hintOwn")
+            : t("init.hintGM")}
         </p>
       )}
     </div>
@@ -300,17 +301,17 @@ function SettingsPanel({ settings, onChange }: { settings: Settings; onChange: (
     <div class="settings">
       <div class="field">
         <span class="field-label">
-          Orden de iniciativa
-          <Help text="Normal: una tirada vale para todo el combate. Reroll cada ronda: al terminar la ronda, todos vuelven a tirar iniciativa." />
+          {t("set.order")}
+          <Help text={t("set.orderHelp")} />
         </span>
-        <div class="segmented" role="group" aria-label="Orden de iniciativa">
+        <div class="segmented" role="group" aria-label={t("set.order")}>
           <button
             type="button"
             class={settings.mode === "standard" ? "on" : ""}
             aria-pressed={settings.mode === "standard"}
             onClick={() => onChange({ ...settings, mode: "standard" })}
           >
-            Normal
+            {t("set.standard")}
           </button>
           <button
             type="button"
@@ -318,21 +319,21 @@ function SettingsPanel({ settings, onChange }: { settings: Settings; onChange: (
             aria-pressed={settings.mode === "reroll"}
             onClick={() => onChange({ ...settings, mode: "reroll" })}
           >
-            Reroll cada ronda
+            {t("set.reroll")}
           </button>
         </div>
       </div>
       {settings.mode === "reroll" && (
         <div class="field">
-          <span class="field-label">Reroll</span>
-          <div class="segmented" role="group" aria-label="Tipo de reroll">
+          <span class="field-label">{t("set.rerollLabel")}</span>
+          <div class="segmented" role="group" aria-label={t("set.rerollKind")}>
             <button
               type="button"
               class={settings.rerollAuto ? "on" : ""}
               aria-pressed={settings.rerollAuto}
               onClick={() => onChange({ ...settings, rerollAuto: true })}
             >
-              Automático
+              {t("set.auto")}
             </button>
             <button
               type="button"
@@ -340,13 +341,13 @@ function SettingsPanel({ settings, onChange }: { settings: Settings; onChange: (
               aria-pressed={!settings.rerollAuto}
               onClick={() => onChange({ ...settings, rerollAuto: false })}
             >
-              Manual
+              {t("set.manual")}
             </button>
           </div>
           <p class="field-help">
             {settings.rerollAuto
-              ? "Al terminar la ronda, el tracker tira d20 + bonificador para todos."
-              : "Al terminar la ronda, las iniciativas se vacían. Se escriben o se tiran de nuevo."}
+              ? t("set.autoHelp")
+              : t("set.manualHelp")}
           </p>
         </div>
       )}
@@ -356,8 +357,8 @@ function SettingsPanel({ settings, onChange }: { settings: Settings; onChange: (
           checked={settings.playersEditOwn}
           onChange={(e) => onChange({ ...settings, playersEditOwn: e.currentTarget.checked })}
         />
-        Los jugadores pueden cambiar su propia iniciativa
-        <Help text="Cada jugador puede escribir o tirar la iniciativa de sus propios tokens. El dueño de cada token se asigna en su menú de opciones. El GM debe estar conectado." />
+        {t("set.playersEdit")}
+        <Help text={t("set.playersEditHelp")} />
       </label>
       <label class="check">
         <input
@@ -365,16 +366,16 @@ function SettingsPanel({ settings, onChange }: { settings: Settings; onChange: (
           checked={settings.showMarker}
           onChange={(e) => onChange({ ...settings, showMarker: e.currentTarget.checked })}
         />
-        Marcar en el mapa el token en turno
-        <Help text="Dibuja un marco alrededor del token que tiene el turno. Si el token está oculto, solo el GM ve el marco." />
+        {t("set.marker")}
+        <Help text={t("set.markerHelp")} />
       </label>
     </div>
   );
 }
 
 function modeLabel(settings: Settings): string {
-  if (settings.mode === "standard") return "Orden normal";
-  return settings.rerollAuto ? "Reroll automático" : "Reroll manual";
+  if (settings.mode === "standard") return t("mode.standard");
+  return t(settings.rerollAuto ? "mode.auto" : "mode.manual");
 }
 
 function formatBonus(bonus: number): string {

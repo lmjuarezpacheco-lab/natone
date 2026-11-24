@@ -16,6 +16,7 @@ import {
   withKeep,
 } from "../dice/notation";
 import type { ThrowDice } from "../dice/throw";
+import { type Key, t } from "../i18n";
 import type { Backend, RollEntry, State } from "../types";
 import { Help } from "./Help";
 import { RollLine } from "./RollLine";
@@ -29,10 +30,10 @@ interface Props {
 }
 
 /** One-click pools for the most common keep rules. */
-const PRESETS: { label: string; sides: number; count: number; keep: Keep }[] = [
-  { label: "Ventaja", sides: 20, count: 2, keep: { mode: "h", n: 1 } },
-  { label: "Desventaja", sides: 20, count: 2, keep: { mode: "l", n: 1 } },
-  { label: "4d6, 3 más altos", sides: 6, count: 4, keep: { mode: "h", n: 3 } },
+const PRESETS: { label: Key; sides: number; count: number; keep: Keep }[] = [
+  { label: "dice.advantage", sides: 20, count: 2, keep: { mode: "h", n: 1 } },
+  { label: "dice.disadvantage", sides: 20, count: 2, keep: { mode: "l", n: 1 } },
+  { label: "dice.fourD6", sides: 6, count: 4, keep: { mode: "h", n: 3 } },
 ];
 
 export function Dice({ backend, state, throwDice, rolling }: Props) {
@@ -85,11 +86,11 @@ export function Dice({ backend, state, throwDice, rolling }: Props) {
     <div class="dice">
       <div class="result" aria-live="polite">
         {rolling ? (
-          <span class="muted">Tirando…</span>
+          <span class="muted">{t("common.rolling")}</span>
         ) : last ? (
           <RollLine roll={last} big />
         ) : (
-          <span class="muted">Elige dados y pulsa Tirar.</span>
+          <span class="muted">{t("dice.prompt")}</span>
         )}
       </div>
       <div class="die-grid">
@@ -100,7 +101,7 @@ export function Dice({ backend, state, throwDice, rolling }: Props) {
               <button
                 type="button"
                 class={`die ${count > 0 ? "on" : ""}`}
-                aria-label={`Agregar d${sides}. Ahora ${count}`}
+                aria-label={t("dice.addDie", { sides, count })}
                 onClick={() => addDie(sides, 1)}
                 onContextMenu={(e) => {
                   e.preventDefault();
@@ -111,7 +112,7 @@ export function Dice({ backend, state, throwDice, rolling }: Props) {
                 {count > 0 && <span class="count">{count}</span>}
               </button>
               {count > 0 && (
-                <button type="button" class="minus" aria-label={`Quitar un d${sides}`} onClick={() => addDie(sides, -1)}>
+                <button type="button" class="minus" aria-label={t("dice.removeDie", { sides })} onClick={() => addDie(sides, -1)}>
                   −
                 </button>
               )}
@@ -129,7 +130,7 @@ export function Dice({ backend, state, throwDice, rolling }: Props) {
             aria-pressed={isPreset(preset)}
             onClick={() => togglePreset(preset)}
           >
-            {preset.label}
+            {t(preset.label)}
           </button>
         ))}
       </div>
@@ -143,24 +144,24 @@ export function Dice({ backend, state, throwDice, rolling }: Props) {
           <div class="keep-row" key={sides}>
             <span class="keep-die">
               {count}d{sides}
-              <Help text="Elige qué dados se suman: todos, los más altos o los más bajos. Con ventaja se tiran 2d20 y cuenta el más alto." />
+              <Help text={t("dice.keepHelp")} />
             </span>
-            <div class="segmented small" role="group" aria-label={`Qué d${sides} se suman`}>
+            <div class="segmented small" role="group" aria-label={t("dice.keepWhich", { sides })}>
               <button type="button" class={!rule ? "on" : ""} aria-pressed={!rule} onClick={() => updatePool(withKeep(pool, sides, null))}>
-                Todos
+                {t("dice.all")}
               </button>
               <button type="button" class={rule?.mode === "h" ? "on" : ""} aria-pressed={rule?.mode === "h"} onClick={() => choose("h")}>
-                Más altos
+                {t("dice.highest")}
               </button>
               <button type="button" class={rule?.mode === "l" ? "on" : ""} aria-pressed={rule?.mode === "l"} onClick={() => choose("l")}>
-                Más bajos
+                {t("dice.lowest")}
               </button>
             </div>
             {rule && (
-              <div class="stepper" role="group" aria-label={`Cuántos d${sides} se suman`}>
+              <div class="stepper" role="group" aria-label={t("dice.keepCount", { sides })}>
                 <button
                   type="button"
-                  aria-label="Sumar un dado menos"
+                  aria-label={t("dice.keepFewer")}
                   disabled={rule.n <= 1}
                   onClick={() => updatePool(withKeep(pool, sides, { ...rule, n: rule.n - 1 }))}
                 >
@@ -169,7 +170,7 @@ export function Dice({ backend, state, throwDice, rolling }: Props) {
                 <span>{rule.n}</span>
                 <button
                   type="button"
-                  aria-label="Sumar un dado más"
+                  aria-label={t("dice.keepMore")}
                   disabled={rule.n >= count - 1}
                   onClick={() => updatePool(withKeep(pool, sides, { ...rule, n: rule.n + 1 }))}
                 >
@@ -182,19 +183,19 @@ export function Dice({ backend, state, throwDice, rolling }: Props) {
       })}
 
       <div class="roll-row">
-        <div class="stepper" role="group" aria-label="Modificador">
-          <button type="button" aria-label="Bajar modificador" onClick={() => addModifier(-1)}>
+        <div class="stepper" role="group" aria-label={t("dice.modifier")}>
+          <button type="button" aria-label={t("dice.modifierDown")} onClick={() => addModifier(-1)}>
             −
           </button>
           <span>{pool.modifier >= 0 ? `+${pool.modifier}` : pool.modifier}</span>
-          <button type="button" aria-label="Subir modificador" onClick={() => addModifier(1)}>
+          <button type="button" aria-label={t("dice.modifierUp")} onClick={() => addModifier(1)}>
             +
           </button>
         </div>
         <input
           class={`notation ${textInvalid ? "invalid" : ""}`}
           type="text"
-          aria-label="Tirada en texto"
+          aria-label={t("dice.asText")}
           aria-invalid={textInvalid}
           placeholder="2d6 + 3"
           value={text}
@@ -213,21 +214,21 @@ export function Dice({ backend, state, throwDice, rolling }: Props) {
             if (!rolling) clearBox();
           }}
         >
-          Limpiar
+          {t("dice.clear")}
         </button>
       </div>
       {textInvalid && (
-        <p class="field-help error">Formato no válido. Ejemplos: 2d6 + 1d20 - 1, 4d6kh3. Dados: d4 a d100.</p>
+        <p class="field-help error">{t("dice.invalid")}</p>
       )}
 
       <div class="roll-row">
         <button type="button" class="primary wide" disabled={!canRoll} onClick={roll}>
-          {rolling ? "Tirando…" : "Tirar"}
+          {rolling ? t("common.rolling") : t("dice.roll")}
         </button>
         <label class="check">
           <input type="checkbox" checked={hidden} onChange={(e) => setHidden(e.currentTarget.checked)} />
-          Oculta
-          <Help text="La tirada no se comparte. Solo tú ves el resultado." />
+          {t("dice.hidden")}
+          <Help text={t("dice.hiddenHelp")} />
         </label>
       </div>
     </div>

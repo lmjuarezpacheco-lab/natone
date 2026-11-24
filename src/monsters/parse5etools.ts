@@ -1,5 +1,6 @@
 // Reads monster files in the 5etools JSON layout ({ "monster": [...] }), which is also the layout of
 // 5etools homebrew files. Only the user's own file is read. Nothing is fetched or bundled.
+import { type Key, t } from "../i18n";
 import { ABILITIES, type Ability, type DamageRoll, type Feature, type Profile, type Section, abilityModifier } from "./types";
 
 type Raw = Record<string, unknown>;
@@ -56,13 +57,14 @@ const DAMAGE_TYPES = new Set([
   "thunder",
 ]);
 
-const SECTIONS: [key: string, title: string][] = [
-  ["trait", "Rasgos"],
-  ["action", "Acciones"],
-  ["bonus", "Acciones adicionales"],
-  ["reaction", "Reacciones"],
-  ["legendary", "Acciones legendarias"],
-  ["mythic", "Acciones míticas"],
+// Section names follow the language of the panel at import time. Sheets already saved keep theirs.
+const SECTIONS: [key: string, title: Key][] = [
+  ["trait", "sec.traits"],
+  ["action", "sec.actions"],
+  ["bonus", "sec.bonus"],
+  ["reaction", "sec.reactions"],
+  ["legendary", "sec.legendary"],
+  ["mythic", "sec.mythic"],
 ];
 
 const isObject = (value: unknown): value is Raw => typeof value === "object" && value !== null && !Array.isArray(value);
@@ -301,7 +303,7 @@ function parseMonster(monster: Raw): Profile | null {
     const list = Array.isArray(monster[key]) ? (monster[key] as unknown[]) : [];
     const features = list.map(parseFeature).filter((f): f is Feature => f !== null);
     if (key === "trait") features.push(...spellcasting);
-    if (features.length > 0) sections.push({ title, features });
+    if (features.length > 0) sections.push({ title: t(title), features });
   }
 
   return {
@@ -326,7 +328,7 @@ function parseMonster(monster: Raw): Profile | null {
 /** Throws when the file holds no monster list. */
 export function parseMonsterFile(json: unknown): ImportResult {
   const list = isObject(json) && Array.isArray(json.monster) ? json.monster : null;
-  if (!list) throw new Error("El archivo no tiene una lista \"monster\".");
+  if (!list) throw new Error(t("mon.fileNoList"));
 
   const key = (m: Raw) => `${String(m.source ?? "")}|${String(m.name ?? "")}`.toLowerCase();
   const originals = new Map<string, Raw>();

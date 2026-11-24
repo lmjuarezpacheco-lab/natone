@@ -12,6 +12,20 @@ https://anoobdm.com/natone/manifest.json
 
 Después activa *NatOne* en la sala.
 
+### In English
+
+The panel is also available in English. Use this address instead:
+
+```
+https://anoobdm.com/natone/en/manifest.json
+```
+
+El idioma lo decide la dirección que instala el GM, así que toda la sala ve la extensión en ese idioma.
+Instala una sola de las dos: con ambas activas la extensión correría dos veces en la misma sala.
+Los datos son los mismos en los dos idiomas (iniciativa, ajustes, biblioteca de monstruos), así que se puede
+cambiar de una dirección a la otra sin perder nada. Los textos que ya quedaron guardados, como las etiquetas
+de tiradas del registro o los nombres de sección de una hoja, se quedan en el idioma en que se crearon.
+
 ## Qué hace
 
 **Iniciativa**
@@ -83,9 +97,14 @@ npm run dev
 ```
 
 `http://localhost:5173` abre una vista previa con datos de ejemplo. El panel es `panel.html`; la raíz redirige a él.
+La versión en inglés es `en/panel.html`. También vale `panel.html?lang=en`, que es cómodo para incrustar la
+vista previa en otra página.
 
 Para probar dentro de Owlbear Rodeo: *Extensiones → Agregar extensión* y pega
-`http://localhost:5173/manifest.json`.
+`http://localhost:5173/manifest.json`, o `http://localhost:5173/en/manifest.json` para el inglés.
+
+Todos los textos están en `src/i18n.ts`, en español y en inglés. Un test comprueba que los dos idiomas
+tienen las mismas claves.
 
 ```bash
 npm test
@@ -94,7 +113,7 @@ npm run build
 
 Cada push a `main` pasa los tests, compila y publica en el proyecto `natone-extension` de Cloudflare Pages
 (`.github/workflows/deploy.yml`). La extensión se sirve bajo `https://anoobdm.com/natone/`:
-el manifiesto en `manifest.json` y el panel en `panel.html`.
+el manifiesto en `manifest.json` y el panel en `panel.html`, y sus versiones en inglés en `en/`.
 
 `dist/` es un sitio estático, así que también sirve en otro hosting con HTTPS. Si el sitio vive en una
 subcarpeta, compila con `BASE_PATH=/nombre-de-la-carpeta/ npm run build`.

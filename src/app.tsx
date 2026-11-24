@@ -7,6 +7,7 @@ import { RollCleared, clearBox, resizeBox, roll3d } from "./dice/box";
 import { throwWithRng } from "./dice/notation";
 import { findTheme } from "./dice/themes";
 import { type DiceGroup, type ThrowDice, matchesThrow } from "./dice/throw";
+import { t } from "./i18n";
 import { type Prefs, loadPrefs, savePrefs } from "./prefs";
 import type { Backend, State } from "./types";
 
@@ -171,7 +172,7 @@ export function App({ backend }: { backend: Backend }) {
         // Cleared dice are not a failure of the engine, so there is nothing to tell the user.
         if (!(error instanceof RollCleared)) {
           console.warn("3D dice failed, using a plain roll.", error);
-          setTrayNotice("Dados 3D no disponibles ahora. Se usó una tirada simple.");
+          setTrayNotice(t("tray.fallback"));
         }
         return throwWithRng(dice);
       } finally {
@@ -186,29 +187,29 @@ export function App({ backend }: { backend: Backend }) {
       <div class="main">
         <nav class="tabs" role="tablist">
           <button type="button" role="tab" aria-selected={tab === "initiative"} onClick={() => setTab("initiative")}>
-            Iniciativa
+            {t("tab.initiative")}
           </button>
           <button type="button" role="tab" aria-selected={tab === "dice"} onClick={() => setTab("dice")}>
-            Dados
+            {t("tab.dice")}
           </button>
           {isGM && (
             <button type="button" role="tab" aria-selected={tab === "monsters"} onClick={() => setTab("monsters")}>
-              Monstruos
+              {t("tab.monsters")}
             </button>
           )}
         </nav>
 
         {state.standalone && backend.setRole && (
           <div class="devbar">
-            <span>Vista previa con datos de ejemplo.</span>
+            <span>{t("dev.preview")}</span>
             <span class="devbar-buttons">
               {backend.setThemeMode && (
                 <button type="button" onClick={() => backend.setThemeMode!(state.theme.mode === "DARK" ? "LIGHT" : "DARK")}>
-                  Tema {state.theme.mode === "DARK" ? "claro" : "oscuro"}
+                  {t(state.theme.mode === "DARK" ? "dev.themeLight" : "dev.themeDark")}
                 </button>
               )}
               <button type="button" onClick={() => backend.setRole!(state.me.role === "GM" ? "PLAYER" : "GM")}>
-                Ver como {state.me.role === "GM" ? "jugador" : "GM"}
+                {t(state.me.role === "GM" ? "dev.viewAsPlayer" : "dev.viewAsGM")}
               </button>
             </span>
           </div>
@@ -243,14 +244,14 @@ export function App({ backend }: { backend: Backend }) {
           class="tray-handle"
           aria-expanded={trayOpen}
           aria-controls="tray-panel"
-          aria-label={`${prefs.tray ? "Cerrar" : "Abrir"} la bandeja de dados${unread ? ". Hay tiradas nuevas" : ""}`}
-          title={prefs.tray ? "Cerrar la bandeja de dados" : "Abrir la bandeja de dados"}
+          aria-label={`${t(prefs.tray ? "tray.close" : "tray.open")}${unread ? `. ${t("tray.unread")}` : ""}`}
+          title={t(prefs.tray ? "tray.close" : "tray.open")}
           onClick={toggleTray}
         >
           <svg class="tray-handle-arrow" viewBox="0 0 12 12" aria-hidden="true">
             <path d="M4.5 2.5 8 6l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
-          <span class="tray-handle-label">Bandeja</span>
+          <span class="tray-handle-label">{t("tray.handle")}</span>
           {unread && <span class="tray-handle-dot" aria-hidden="true" />}
         </button>
         {/* Stays mounted while closed: the 3D engine keeps its canvas inside. */}

@@ -1,6 +1,7 @@
 // Sample data for previewing the panel outside Owlbear Rodeo. Nothing here is shared or saved.
 import { mergeRolls } from "../history";
 import { applyPatches, canEdit } from "../logic";
+import { t } from "../i18n";
 import type { Backend, Combatant, State, ThemeColors } from "../types";
 import { DEFAULT_COMBAT, DEFAULT_SETTINGS } from "../types";
 
@@ -9,7 +10,7 @@ const SAMPLE: Combatant[] = [
   { id: "t2", name: "Brom", initiative: null, bonus: 1, ownerId: "ana", profileId: null, visible: true },
   { id: "t3", name: "Kael", initiative: null, bonus: 4, ownerId: "beto", profileId: null, visible: true },
   { id: "t4", name: "Goblin A", initiative: null, bonus: 2, ownerId: "sara", profileId: null, visible: true },
-  { id: "t5", name: "Ogro oculto", initiative: null, bonus: -1, ownerId: "sara", profileId: null, visible: false },
+  { id: "t5", name: t("sample.hiddenOgre"), initiative: null, bonus: -1, ownerId: "sara", profileId: null, visible: false },
 ];
 
 // Close to the two themes of Owlbear Rodeo, so the preview shows what the panel looks like in each.
@@ -42,9 +43,9 @@ export function createMockBackend(): Backend {
   let state: State = {
     standalone: true,
     sceneReady: true,
-    me: { id: "me", name: "Tú", role: "GM", color: "#7c5cff" },
+    me: { id: "me", name: t("sample.you"), role: "GM", color: "#7c5cff" },
     players: [
-      { id: "me", name: "Tú", role: "GM" },
+      { id: "me", name: t("sample.you"), role: "GM" },
       { id: "ana", name: "Ana", role: "PLAYER" },
       { id: "beto", name: "Beto", role: "PLAYER" },
       { id: "sara", name: "Sara", role: "GM" },

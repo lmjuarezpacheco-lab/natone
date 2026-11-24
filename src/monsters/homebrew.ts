@@ -1,8 +1,10 @@
 // Sheets created or edited inside the extension, and the backup file that carries them between browsers.
 import { parseNotation } from "../dice/notation";
+import { t } from "../i18n";
 import { ABILITIES, type Ability, type DamageRoll, type Feature, type Profile, type Section, abilityModifier } from "./types";
 
-export const SECTION_TITLES = ["Rasgos", "Acciones", "Acciones adicionales", "Reacciones", "Acciones legendarias"];
+/** Section names offered by the editor, in the language of the panel. A saved sheet keeps the names it was saved with. */
+export const SECTION_TITLES = [t("sec.traits"), t("sec.actions"), t("sec.bonus"), t("sec.reactions"), t("sec.legendary")];
 export const HOMEBREW_SOURCE = "Homebrew";
 const HOMEBREW_PREFIX = "hb|";
 
@@ -44,7 +46,7 @@ const signed = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
 const perAbility = <T>(value: (ability: Ability) => T) =>
   Object.fromEntries(ABILITIES.map((ability) => [ability, value(ability)])) as Record<Ability, T>;
 
-export function emptyFeature(section = "Acciones"): FeatureDraft {
+export function emptyFeature(section = t("sec.actions")): FeatureDraft {
   return { section, name: "", text: "", hit: "", damage: "" };
 }
 
@@ -99,12 +101,12 @@ function readInt(text: string, label: string, min: number, max: number, errors: 
   const compact = text.trim().replace("−", "-");
   if (compact === "") return null;
   if (!/^[+-]?\d+$/.test(compact)) {
-    errors.push(`${label}: escribe un número entero.`);
+    errors.push(t("hb.integer", { label }));
     return null;
   }
   const value = Number(compact);
   if (value < min || value > max) {
-    errors.push(`${label}: debe estar entre ${min} y ${max}.`);
+    errors.push(t("hb.range", { label, min, max }));
     return null;
   }
   return value;
@@ -115,7 +117,7 @@ function readSkills(text: string, errors: string[]): Record<string, number> {
   for (const part of text.split(",").map((p) => p.trim()).filter(Boolean)) {
     const match = /^(.+?)\s*([+\-−]\d+)$/.exec(part);
     if (!match) {
-      errors.push(`Habilidades: "${part}" debe ser nombre y bonificador, por ejemplo "stealth +6".`);
+      errors.push(t("hb.skillFormat", { part }));
       continue;
     }
     skills[match[1].trim().toLowerCase()] = Number(match[2].replace("−", "-"));
@@ -130,7 +132,7 @@ function readDamage(text: string, featureName: string, errors: string[]): Damage
     const end = part.search(/\d(?!.*\d)/) + 1;
     const notation = part.slice(0, end).trim();
     if (end === 0 || !parseNotation(notation)) {
-      errors.push(`Daño de "${featureName || "sin nombre"}": "${part}" no es una tirada. Ejemplo: 1d6 + 2 slashing.`);
+      errors.push(t("hb.damageFormat", { name: featureName || t("hb.unnamed"), part }));
       continue;
     }
     rolls.push({ notation, type: part.slice(end).trim().toLowerCase() });
@@ -142,12 +144,12 @@ function readDamage(text: string, featureName: string, errors: string[]): Damage
 export function draftToProfile(draft: Draft, id: string, source: string): { profile: Profile | null; errors: string[] } {
   const errors: string[] = [];
   const name = draft.name.trim();
-  if (name === "") errors.push("Nombre: es obligatorio.");
+  if (name === "") errors.push(t("hb.nameRequired"));
 
   const abilities = perAbility((ability) => readInt(draft.abilities[ability], ability.toUpperCase(), 1, 30, errors) ?? 10);
   const saves: Partial<Record<Ability, number>> = {};
   for (const ability of ABILITIES) {
-    const bonus = readInt(draft.saves[ability], `Salvación ${ability.toUpperCase()}`, -20, 30, errors);
+    const bonus = readInt(draft.saves[ability], t("hb.saveLabel", { ability: ability.toUpperCase() }), -20, 30, errors);
     if (bonus !== null) saves[ability] = bonus;
   }
 
@@ -162,7 +164,7 @@ export function draftToProfile(draft: Draft, id: string, source: string): { prof
       features.push({
         name: featureName,
         text,
-        hit: readInt(item.hit, `Ataque de "${featureName || "sin nombre"}"`, -20, 50, errors),
+        hit: readInt(item.hit, t("hb.attackOf", { name: featureName || t("hb.unnamed") }), -20, 50, errors),
         damage: readDamage(item.damage, featureName, errors),
       });
     }
@@ -175,15 +177,15 @@ export function draftToProfile(draft: Draft, id: string, source: string): { prof
     source,
     kind: draft.kind.trim(),
     cr: draft.cr.trim(),
-    ac: readInt(draft.ac, "CA", 0, 99, errors),
+    ac: readInt(draft.ac, t("stat.ac"), 0, 99, errors),
     acNote: draft.acNote.trim(),
-    hp: readInt(draft.hp, "PG", 0, 99999, errors),
+    hp: readInt(draft.hp, t("stat.hp"), 0, 99999, errors),
     hpFormula: draft.hpFormula.trim(),
     speed: draft.speed.trim(),
     abilities,
     saves,
     skills: readSkills(draft.skills, errors),
-    initiative: readInt(draft.initiative, "Iniciativa", -20, 30, errors) ?? abilityModifier(abilities.dex),
+    initiative: readInt(draft.initiative, t("ed.initiative"), -20, 30, errors) ?? abilityModifier(abilities.dex),
     sections,
   };
   return { profile: errors.length === 0 ? profile : null, errors };
@@ -225,7 +227,7 @@ export function sanitizeProfile(raw: unknown): Profile | null {
       );
       return [{ name: text(feature.name, 120), text: text(feature.text, 6000), hit: int(feature.hit, -20, 50), damage }];
     });
-    return features.length > 0 ? [{ title: text(section.title, 60) || "Rasgos", features }] : [];
+    return features.length > 0 ? [{ title: text(section.title, 60) || t("sec.traits"), features }] : [];
   });
   const id = text(raw.id, 80);
   return {

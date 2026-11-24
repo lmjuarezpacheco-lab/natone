@@ -1,3 +1,5 @@
+import { t } from "../i18n";
+
 export interface DiceTheme {
   /** Folder name under assets/dice-box/themes. Keep in sync with scripts/copy-assets.mjs. */
   id: string;
@@ -7,15 +9,15 @@ export interface DiceTheme {
 }
 
 export const THEMES: DiceTheme[] = [
-  { id: "default", name: "Clásico", colorable: true },
-  { id: "smooth", name: "Liso", colorable: true },
-  { id: "gemstone", name: "Gema", colorable: true },
-  { id: "rock", name: "Roca", colorable: true },
-  { id: "rust", name: "Óxido", colorable: true },
-  { id: "gemstoneMarble", name: "Mármol arcoíris", colorable: false },
-  { id: "blueGreenMetal", name: "Metal envejecido", colorable: false },
-  { id: "diceOfRolling", name: "Dice of Rolling", colorable: false },
-  { id: "wooden", name: "Madera", colorable: false },
+  { id: "default", name: t("theme.default"), colorable: true },
+  { id: "smooth", name: t("theme.smooth"), colorable: true },
+  { id: "gemstone", name: t("theme.gemstone"), colorable: true },
+  { id: "rock", name: t("theme.rock"), colorable: true },
+  { id: "rust", name: t("theme.rust"), colorable: true },
+  { id: "gemstoneMarble", name: t("theme.gemstoneMarble"), colorable: false },
+  { id: "blueGreenMetal", name: t("theme.blueGreenMetal"), colorable: false },
+  { id: "diceOfRolling", name: t("theme.diceOfRolling"), colorable: false },
+  { id: "wooden", name: t("theme.wooden"), colorable: false },
 ];
 
 export function findTheme(id: string): DiceTheme {

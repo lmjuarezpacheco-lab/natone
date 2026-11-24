@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import { RollCleared, clearBox, preview3d } from "../dice/box";
 import { THEMES, findTheme } from "../dice/themes";
+import { t } from "../i18n";
 import type { Prefs } from "../prefs";
 import type { RollEntry } from "../types";
 import { Help } from "./Help";
@@ -41,7 +42,7 @@ export function Tray({ open, prefs, onPrefs, rolls, rolling, notice, onNotice, e
         // The sample dice were cleared before they settled: the settings closed or a real roll took over.
         if (error instanceof RollCleared) return;
         console.warn("3D dice preview failed.", error);
-        onNotice("Dados 3D no disponibles ahora.");
+        onNotice(t("tray.unavailable"));
       });
     }, 250);
     return () => {
@@ -56,18 +57,18 @@ export function Tray({ open, prefs, onPrefs, rolls, rolling, notice, onNotice, e
   };
 
   return (
-    <aside id="tray-panel" class="tray-panel" aria-label="Bandeja de dados" inert={!open}>
+    <aside id="tray-panel" class="tray-panel" aria-label={t("tray.title")} inert={!open}>
       <div class="tray-head">
         <h2 class="tray-title">
-          Bandeja de dados
-          <Help text="Tus tiradas de iniciativa, de dados y de monstruos ruedan aquí en 3D. La animación solo la ves tú: los demás reciben el resultado. Con la bandeja cerrada, los dados 3D no se cargan y la tirada es inmediata." />
+          {t("tray.title")}
+          <Help text={t("tray.help")} />
         </h2>
         <button
           type="button"
           class={`icon ${showPrefs ? "on" : ""}`}
           aria-expanded={showPrefs}
-          aria-label="Mis dados: modelo, color y avisos"
-          title="Mis dados"
+          aria-label={t("tray.gearLabel")}
+          title={t("tray.gear")}
           onClick={togglePrefs}
         >
           <GearIcon />
@@ -78,7 +79,7 @@ export function Tray({ open, prefs, onPrefs, rolls, rolling, notice, onNotice, e
         <div class="settings">
           <div class="field inline">
             <label>
-              Modelo
+              {t("tray.model")}
               <select value={theme.id} onChange={(e) => onPrefs({ theme: e.currentTarget.value })}>
                 {THEMES.map((t) => (
                   <option key={t.id} value={t.id}>
@@ -88,7 +89,7 @@ export function Tray({ open, prefs, onPrefs, rolls, rolling, notice, onNotice, e
               </select>
             </label>
             <label>
-              Color
+              {t("tray.color")}
               <input
                 type="color"
                 value={prefs.themeColor}
@@ -97,13 +98,13 @@ export function Tray({ open, prefs, onPrefs, rolls, rolling, notice, onNotice, e
               />
             </label>
           </div>
-          {!theme.colorable && <p class="field-help">Este modelo tiene color fijo.</p>}
+          {!theme.colorable && <p class="field-help">{t("tray.fixedColor")}</p>}
           <label class="check">
             <input type="checkbox" checked={prefs.notify} onChange={(e) => onPrefs({ notify: e.currentTarget.checked })} />
-            Avisarme de tiradas de otros
-            <Help text="Muestra un aviso cada vez que otra persona comparte una tirada. Las tiradas de iniciativa no avisan: ya se ven en el tracker." />
+            {t("tray.notify")}
+            <Help text={t("tray.notifyHelp")} />
           </label>
-          <p class="field-help">Estos ajustes son solo tuyos. Los demás no ven tus dados 3D, solo el resultado.</p>
+          <p class="field-help">{t("tray.private")}</p>
         </div>
       )}
 
@@ -111,24 +112,24 @@ export function Tray({ open, prefs, onPrefs, rolls, rolling, notice, onNotice, e
       <div class="tray-wrap">
         <div id="dice-tray" class="tray" aria-hidden="true" />
         {showPrefs ? (
-          <span class="tray-caption">Vista previa de tus dados</span>
+          <span class="tray-caption">{t("tray.preview")}</span>
         ) : (
-          !used && <span class="tray-caption">Tus tiradas ruedan aquí.</span>
+          !used && <span class="tray-caption">{t("tray.stage")}</span>
         )}
       </div>
       {notice && <p class="banner">{notice}</p>}
 
-      <h3 class="log-title">Tiradas</h3>
+      <h3 class="log-title">{t("tray.rolls")}</h3>
       {rolls.length === 0 ? (
-        <p class="empty">Aún no hay tiradas.</p>
+        <p class="empty">{t("tray.noRolls")}</p>
       ) : (
-        <ul class="log" tabIndex={0} aria-label="Registro de tiradas">
+        <ul class="log" tabIndex={0} aria-label={t("tray.log")}>
           {rolls.map((r) => (
             <li key={r.id}>
               <span class="log-who">
                 <span class="dot" style={{ background: r.color }} />
                 {r.playerName}
-                {r.hidden && <span class="tag">oculta</span>}
+                {r.hidden && <span class="tag">{t("tray.hiddenTag")}</span>}
               </span>
               <RollLine roll={r} />
             </li>

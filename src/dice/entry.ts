@@ -1,7 +1,8 @@
 import type { Combatant, Me, Patches, RollEntry } from "../types";
+import { t } from "../i18n";
 import { type Adv, type Pool, advApplies, buildResult, diceToThrow, formatNotation, throwWithRng } from "./notation";
 
-const ADV_SUFFIX: Record<Adv, string> = { normal: "", adv: " (ventaja)", dis: " (desventaja)" };
+const advSuffix = (adv: Adv) => (adv === "normal" ? "" : ` (${t(adv === "adv" ? "roll.advantage" : "roll.disadvantage")})`);
 
 interface Options {
   /** What the roll is for, for example "Goblin · Scimitar". */
@@ -26,7 +27,7 @@ export function makeEntry(
     color: me.color,
     ...(options.label ? { label: options.label } : {}),
     ...(options.kind ? { kind: options.kind } : {}),
-    notation: formatNotation(pool) + (advApplies(pool, adv) ? ADV_SUFFIX[adv] : ""),
+    notation: formatNotation(pool) + (advApplies(pool, adv) ? advSuffix(adv) : ""),
     dice: result.dice,
     modifier: pool.modifier,
     total: result.total,
@@ -54,6 +55,6 @@ export function initiativeEntries(me: Me, combatants: readonly Combatant[], patc
     if (typeof initiative !== "number") return [];
     const pool: Pool = { counts: { 20: 1 }, modifier: c.bonus };
     const thrown = [{ sides: 20, value: initiative - c.bonus }];
-    return [makeEntry(me, pool, "normal", thrown, { label: `Iniciativa · ${c.name}`, hidden: !c.visible, kind: "initiative" })];
+    return [makeEntry(me, pool, "normal", thrown, { label: `${t("roll.initiative")} · ${c.name}`, hidden: !c.visible, kind: "initiative" })];
   });
 }

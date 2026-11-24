@@ -183,6 +183,10 @@ input[type="checkbox"] {
   background: var(--fill);
   flex: none;
 }
+/* The note takes its own line, so the bar is the same height in every language. */
+.devbar > span:first-child {
+  flex: 1 0 100%;
+}
 .devbar button {
   padding: 3px 8px;
 }
