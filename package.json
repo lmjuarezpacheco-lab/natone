@@ -1,10 +1,12 @@
 {
   "name": "natone",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "assets": "node scripts/copy-assets.mjs",
+    "srd": "node scripts/build-srd.mjs",
     "dev": "npm run assets && vite",
     "build": "npm run assets && tsc --noEmit && vite build",
     "preview": "vite preview",

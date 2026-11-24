@@ -99,7 +99,7 @@ export function Editor({ initial, onSave, onCancel }: Props) {
         </label>
         <label class="f grow">
           {t("ed.acNote")}
-          <input type="text" placeholder="natural armor" {...field("acNote")} />
+          <input type="text" placeholder={t("ed.acNotePlaceholder")} {...field("acNote")} />
         </label>
       </div>
       <div class="form-row">

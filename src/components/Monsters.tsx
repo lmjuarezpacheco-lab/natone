@@ -3,8 +3,8 @@ import { makeEntry } from "../dice/entry";
 import { type Adv, type Pool, diceToThrow, parseNotation } from "../dice/notation";
 import type { ThrowDice } from "../dice/throw";
 import { type Key, plural, t } from "../i18n";
-import { buildBackup, isBackup, isHomebrew, parseBackup } from "../monsters/homebrew";
-import { clearLibrary, deleteProfile, getProfile, listHomebrew, listSummaries, saveProfiles } from "../monsters/library";
+import { HOMEBREW_SOURCE, buildBackup, isBackup, isHomebrew, newHomebrewId, parseBackup } from "../monsters/homebrew";
+import { clearLibrary, deleteProfile, getProfile, isBuiltIn, listHomebrew, listSummaries, saveProfiles } from "../monsters/library";
 import { parseMonsterFile } from "../monsters/parse5etools";
 import { ABILITIES, type Ability, type Feature, type Profile, type ProfileSummary, abilityModifier } from "../monsters/types";
 import type { Backend, RollEntry, State } from "../types";
@@ -123,8 +123,10 @@ export function Monsters({ backend, state, throwDice, rolling, openId, onOpen }:
 
   const needle = query.trim().toLowerCase();
   const matches = (summaries ?? []).filter(
-    (s) => needle === "" || s.name.toLowerCase().includes(needle) || s.source.toLowerCase() === needle,
+    (s) => needle === "" || s.name.toLowerCase().includes(needle) || s.source.toLowerCase() === needle || (needle === "srd" && isBuiltIn(s.id)),
   );
+  /** Sheets stored in this browser; the included ones cannot be deleted. */
+  const own = (summaries ?? []).filter((s) => !isBuiltIn(s.id)).length;
 
   return (
     <div class="monsters">
@@ -184,7 +186,8 @@ export function Monsters({ backend, state, throwDice, rolling, openId, onOpen }:
             <p class="hint">{t("mon.more", { n: matches.length - LIST_LIMIT })}</p>
           )}
           {summaries && matches.length === 0 && <p class="empty">{t("mon.noResults")}</p>}
-          {summaries && summaries.length > 0 && (
+          {summaries && summaries.some((s) => isBuiltIn(s.id)) && <p class="hint">{t("mon.srdIncluded")}</p>}
+          {summaries && own > 0 && (
             <div class="minor-buttons">
               {summaries.some((s) => isHomebrew(s.id)) && (
                 <button type="button" class="ghost" onClick={exportHomebrew}>
@@ -203,7 +206,7 @@ export function Monsters({ backend, state, throwDice, rolling, openId, onOpen }:
                       await refresh();
                     }}
                   >
-                    {t("mon.confirmClear", { n: summaries.length })}
+                    {t("mon.confirmClear", { n: own })}
                   </button>
                   <button type="button" class="ghost" onClick={() => setConfirmClear(false)}>
                     {t("common.cancel")}
@@ -289,6 +292,7 @@ function Sheet({ id, backend, state, throwDice, rolling, onBack, onDeleted, onEd
   };
 
   const hpPool = parseNotation(profile.hpFormula);
+  const builtIn = isBuiltIn(profile.id);
 
   return (
     <div class={`monsters sheet ${rolling ? "busy" : ""}`}>
@@ -297,19 +301,28 @@ function Sheet({ id, backend, state, throwDice, rolling, onBack, onDeleted, onEd
           {t("mon.back")}
         </button>
         <span>
-          <button type="button" class="ghost" onClick={() => onEdit(profile)}>
-            {t("mon.edit")}
-          </button>
-          <button
-            type="button"
-            class="ghost danger"
-            onClick={async () => {
-              await deleteProfile(profile.id);
-              onDeleted();
-            }}
-          >
-            {t("mon.delete")}
-          </button>
+          {builtIn ? (
+            // Included sheets are read-only: editing makes a homebrew copy.
+            <button type="button" class="ghost" onClick={() => onEdit({ ...profile, id: newHomebrewId(), source: HOMEBREW_SOURCE })}>
+              {t("mon.editCopy")}
+            </button>
+          ) : (
+            <>
+              <button type="button" class="ghost" onClick={() => onEdit(profile)}>
+                {t("mon.edit")}
+              </button>
+              <button
+                type="button"
+                class="ghost danger"
+                onClick={async () => {
+                  await deleteProfile(profile.id);
+                  onDeleted();
+                }}
+              >
+                {t("mon.delete")}
+              </button>
+            </>
+          )}
         </span>
       </div>
 
@@ -464,6 +477,14 @@ function Sheet({ id, backend, state, throwDice, rolling, onBack, onDeleted, onEd
           ))}
         </section>
       ))}
+      {builtIn && (
+        <p class="hint">
+          {t("mon.srdCredit")}{" "}
+          <a href="https://anoobdm.com/natone/legal/#terceros" target="_blank" rel="noopener">
+            {t("mon.srdCreditLink")}
+          </a>
+        </p>
+      )}
     </div>
   );
 }

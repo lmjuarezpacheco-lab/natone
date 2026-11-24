@@ -68,8 +68,10 @@ de tiradas del registro o los nombres de sección de una hoja, se quedan en el i
 
 **Monstruos** (solo GM)
 
+- La biblioteca trae precargadas las 331 criaturas del **SRD 5.2.1** (monstruos y animales), en el idioma del panel.
+  Escribe `srd` en el buscador para ver solo esas. No se pueden borrar: *Copiar y editar* crea una copia homebrew.
 - *Importar JSON* lee archivos de monstruos en formato 5etools (`bestiary-*.json` o archivos homebrew con lista `monster`).
-  El archivo lo aporta cada GM. La extensión no descarga ni incluye contenido.
+  El archivo lo aporta cada GM. La extensión no descarga nada.
 - *Nuevo monstruo* abre el editor homebrew: estadísticas, salvaciones, habilidades, rasgos y acciones con ataque y daño.
   *Editar* en cualquier hoja abre el mismo editor.
 - *Exportar homebrew* descarga las hojas creadas en el editor como `natone-homebrew.json`.
@@ -92,8 +94,13 @@ Los mismos archivos en inglés:
 - [`example-monsters.json`](https://github.com/lmjuarezpacheco-lab/natone/releases/download/ejemplos/example-monsters.json)
 - [`example-5etools-format.json`](https://github.com/lmjuarezpacheco-lab/natone/releases/download/ejemplos/example-5etools-format.json)
 
-Sobre el contenido: solo el material del SRD es libre (CC-BY-4.0, con atribución a Wizards of the Coast).
-El resto de los libros oficiales tiene copyright. Si publicas esta extensión, no incluyas archivos de monstruos.
+Sobre el contenido: solo el material del SRD es libre (CC BY 4.0, con atribución a Wizards of the Coast).
+El resto de los libros oficiales tiene copyright. NatOne solo incluye el SRD 5.2.1; ver [`NOTICE.md`](NOTICE.md).
+
+Las criaturas incluidas están en `src/monsters/srd/` y se regeneran con `npm run srd -- <open5e> <markdown-es>`
+(instrucciones en `scripts/build-srd.mjs`). Los números salen de [Open5e](https://github.com/open5e/open5e-api)
+y los textos en español de [dnd-srd-markdown-espanol](https://github.com/alex3rq/dnd-srd-markdown-espanol),
+ambos del SRD 5.2.1 oficial; las fichas que esa conversión dejó incompletas están en `scripts/srd-es-fixes/`.
 
 ## Desarrollo
 
@@ -123,6 +130,11 @@ el manifiesto en `manifest.json` y el panel en `panel.html`, y sus versiones en 
 
 `dist/` es un sitio estático, así que también sirve en otro hosting con HTTPS. Si el sitio vive en una
 subcarpeta, compila con `BASE_PATH=/nombre-de-la-carpeta/ npm run build`.
+
+## Licencia
+
+Código bajo [licencia MIT](LICENSE), © 2026 ANoobDM. El nombre NatOne y sus logos no entran en la licencia.
+Atribuciones de terceros en [`NOTICE.md`](NOTICE.md).
 
 ## Créditos
 

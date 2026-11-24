@@ -63,6 +63,8 @@ body {
   width: min(100vw, var(--panel-w, calc(var(--main-w) + var(--handle-w))));
   height: 100%;
   overflow: hidden;
+  /* clip, not just hidden: a hidden box can still be scrolled by focus, which slid the compact panel sideways. */
+  overflow: clip;
   background: var(--paper);
 }
 .main {
