@@ -30,14 +30,15 @@ body,
 #app {
   margin: 0;
   height: 100%;
-  background: transparent;
 }
-:root.standalone body {
-  background: var(--bg);
+/* The panel paints its own background, also in the standalone preview and while the popover changes
+   width: the frame's canvas would otherwise be opaque black or white depending on the embedding page. */
+html {
+  background: var(--paper);
 }
 body {
   color: var(--text);
-  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: 14px/1.4 Roboto, system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 :root {
@@ -47,12 +48,9 @@ body {
   --tray-w: 300px;
 }
 :root.standalone .app {
-  max-width: calc(var(--main-w) + var(--handle-w));
-  margin: 0 auto;
-  background: var(--paper);
-}
-:root.standalone .app.tray-open {
-  max-width: calc(var(--main-w) + var(--handle-w) + var(--tray-w));
+  /* Fixed left edge, so the main column does not move when the tray opens. */
+  width: fit-content;
+  margin-left: max(0px, calc((100vw - var(--main-w) - var(--handle-w) - var(--tray-w)) / 2));
 }
 /* Main column, then the tray handle on the right edge, then the tray while it is open. */
 .app {
@@ -60,10 +58,12 @@ body {
   display: flex;
   height: 100%;
   overflow: hidden;
+  background: var(--paper);
 }
 .main {
-  flex: 1 1 0;
-  min-width: 0;
+  /* Fixed width: the popover grows and shrinks around it, the column never reflows. */
+  flex: none;
+  width: var(--main-w);
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -772,8 +772,19 @@ button.icon:hover:not(:disabled) {
   padding: 8px 12px 12px;
   border-left: 1px solid var(--line);
 }
+/* The tray grows out of the handle: the clip is what animates, the tray inside keeps its width. */
+.tray-clip {
+  flex: none;
+  width: 0;
+  overflow: hidden;
+  transition: width 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.app.tray-open .tray-clip {
+  width: var(--tray-w);
+}
 .app:not(.tray-open) .tray-panel {
-  display: none;
+  visibility: hidden;
+  transition: visibility 0s 0.22s;
 }
 .tray-head {
   display: flex;
@@ -833,7 +844,13 @@ button.icon:hover:not(:disabled) {
     --tray-w: min(300px, calc(100vw - var(--handle-w) - 32px));
   }
   .main {
+    flex: 1 1 0;
+    width: auto;
     margin-right: var(--handle-w);
+  }
+  .tray-clip {
+    width: var(--tray-w);
+    transition: none;
   }
   .drawer {
     position: absolute;
@@ -849,14 +866,10 @@ button.icon:hover:not(:disabled) {
     transform: none;
     box-shadow: -14px 0 28px -14px rgba(0, 0, 0, 0.55);
   }
-  .app:not(.tray-open) .tray-panel {
-    display: flex;
-    visibility: hidden;
-    transition: visibility 0s 0.22s;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   .drawer,
+  .tray-clip,
   .app:not(.tray-open) .tray-panel {
     transition: none;
   }

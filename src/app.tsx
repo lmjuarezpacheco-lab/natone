@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { Dice } from "./components/Dice";
 import { Initiative } from "./components/Initiative";
 import { Monsters } from "./components/Monsters";
@@ -53,6 +53,13 @@ function widthReached(width: number): Promise<void> {
   });
 }
 
+/** How long the tray takes to slide, a little over the 0.22 s of the stylesheet. Nothing when motion is reduced. */
+const TRAY_MS = 240;
+function pause(ms: number): Promise<void> {
+  const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  return new Promise((resolve) => setTimeout(resolve, reduced ? 0 : ms));
+}
+
 export function App({ backend }: { backend: Backend }) {
   const state = useBackendState(backend);
   const [selectedTab, setTab] = useState<Tab>("initiative");
@@ -67,8 +74,9 @@ export function App({ backend }: { backend: Backend }) {
   // The monster library belongs to the GM.
   const tab = selectedTab === "monsters" && !isGM ? "initiative" : selectedTab;
 
-  // Follow Owlbear Rodeo's light or dark theme for surfaces and text.
-  useEffect(() => {
+  // Follow Owlbear Rodeo's light or dark theme for surfaces and text. Before the first paint, so no
+  // frame shows the wrong background.
+  useLayoutEffect(() => {
     const root = document.documentElement;
     root.dataset.mode = state.theme.mode.toLowerCase();
     root.classList.toggle("standalone", state.standalone);
@@ -89,29 +97,57 @@ export function App({ backend }: { backend: Backend }) {
     });
   };
 
-  const showTray = async (open: boolean) => {
-    if (open) {
-      // Widen first, so the tray appears beside the panel and not over it.
-      await backend.setPanelWidth?.(OPEN_WIDTH).catch(() => {});
-      if (!state.standalone) await widthReached(OPEN_WIDTH);
-      setUnread(false);
-    } else {
-      // Dice that are still rolling finish out of sight: their result is already owed to a roll.
-      if (pending.current === 0) clearBox();
-      setTrayNotice("");
+  // The tray and the popover change in steps: wide popover, then tray in; tray out, then narrow popover.
+  // `wanted` is where the clicks want to end, the rest is what is done so far. One loop walks there,
+  // so quick clicks cannot leave a half-open tray or a wide popover with the tray closed.
+  const wanted = useRef(prefs.tray);
+  const shown = useRef(false);
+  const hostWidth = useRef(CLOSED_WIDTH);
+  const syncing = useRef(false);
+  const standaloneNow = useRef(state.standalone);
+  standaloneNow.current = state.standalone;
+  const syncTray = async () => {
+    if (syncing.current) return;
+    syncing.current = true;
+    try {
+      for (;;) {
+        if (wanted.current) {
+          if (hostWidth.current !== OPEN_WIDTH) {
+            hostWidth.current = OPEN_WIDTH;
+            await backend.setPanelWidth?.(OPEN_WIDTH).catch(() => {});
+            if (!standaloneNow.current) await widthReached(OPEN_WIDTH);
+          } else if (!shown.current) {
+            shown.current = true;
+            setUnread(false);
+            setTrayOpen(true);
+            await pause(TRAY_MS);
+          } else break;
+        } else if (shown.current) {
+          shown.current = false;
+          // Dice that are still rolling finish out of sight: their result is already owed to a roll.
+          if (pending.current === 0) clearBox();
+          setTrayNotice("");
+          setTrayOpen(false);
+          await pause(TRAY_MS);
+        } else if (hostWidth.current !== CLOSED_WIDTH) {
+          hostWidth.current = CLOSED_WIDTH;
+          await backend.setPanelWidth?.(CLOSED_WIDTH).catch(() => {});
+        } else break;
+      }
+    } finally {
+      syncing.current = false;
     }
-    setTrayOpen(open);
-    if (!open) await backend.setPanelWidth?.(CLOSED_WIDTH).catch(() => {});
   };
   const toggleTray = () => {
-    const open = !prefs.tray;
+    const open = !wanted.current;
+    wanted.current = open;
     updatePrefs({ tray: open });
-    void showTray(open);
+    void syncTray();
   };
 
   // A tray that was open last time opens again.
   useEffect(() => {
-    if (prefs.tray) void showTray(true);
+    if (wanted.current) void syncTray();
   }, []);
 
   // The 3D world follows the size of the tray.
@@ -255,6 +291,7 @@ export function App({ backend }: { backend: Backend }) {
           {unread && <span class="tray-handle-dot" aria-hidden="true" />}
         </button>
         {/* Stays mounted while closed: the 3D engine keeps its canvas inside. */}
+        <div class="tray-clip">
         <Tray
           open={trayOpen}
           prefs={prefs}
@@ -265,6 +302,7 @@ export function App({ backend }: { backend: Backend }) {
           onNotice={setTrayNotice}
           exclusive={exclusive}
         />
+        </div>
       </div>
     </div>
   );
