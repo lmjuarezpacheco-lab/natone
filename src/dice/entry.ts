@@ -1,4 +1,4 @@
-import type { Me, RollEntry } from "../types";
+import type { Combatant, Me, Patches, RollEntry } from "../types";
 import { type Adv, type Pool, advApplies, buildResult, diceToThrow, formatNotation, throwWithRng } from "./notation";
 
 const ADV_SUFFIX: Record<Adv, string> = { normal: "", adv: " (ventaja)", dis: " (desventaja)" };
@@ -7,6 +7,7 @@ interface Options {
   /** What the roll is for, for example "Goblin · Scimitar". */
   label?: string;
   hidden?: boolean;
+  kind?: RollEntry["kind"];
 }
 
 /** Builds a log entry from dice that were already thrown, in 3D or not. */
@@ -24,6 +25,7 @@ export function makeEntry(
     playerName: me.name,
     color: me.color,
     ...(options.label ? { label: options.label } : {}),
+    ...(options.kind ? { kind: options.kind } : {}),
     notation: formatNotation(pool) + (advApplies(pool, adv) ? ADV_SUFFIX[adv] : ""),
     dice: result.dice,
     modifier: pool.modifier,
@@ -36,4 +38,22 @@ export function makeEntry(
 /** Instant roll without 3D dice. */
 export function quickRoll(me: Me, pool: Pool, adv: Adv, options: Options = {}): RollEntry {
   return makeEntry(me, pool, adv, throwWithRng(diceToThrow(pool, adv)), options);
+}
+
+/**
+ * Log entries for initiative that was just rolled: one per combatant whose patch sets a value.
+ * The d20 face is the new initiative minus the bonus.
+ *
+ * Players do not see hidden tokens in the tracker, so a roll for a hidden token is a hidden entry:
+ * it stays in the log of whoever rolled it and is never shared. A visible token shows its bonus and
+ * its initiative to everyone already, so its entry tells players nothing new.
+ */
+export function initiativeEntries(me: Me, combatants: readonly Combatant[], patches: Patches): RollEntry[] {
+  return combatants.flatMap((c) => {
+    const initiative = patches[c.id]?.initiative;
+    if (typeof initiative !== "number") return [];
+    const pool: Pool = { counts: { 20: 1 }, modifier: c.bonus };
+    const thrown = [{ sides: 20, value: initiative - c.bonus }];
+    return [makeEntry(me, pool, "normal", thrown, { label: `Iniciativa · ${c.name}`, hidden: !c.visible, kind: "initiative" })];
+  });
 }

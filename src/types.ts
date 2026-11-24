@@ -67,8 +67,10 @@ export interface RollEntry {
   playerId: string;
   playerName: string;
   color: string;
-  /** What the roll is for, when it comes from a monster sheet. */
+  /** What the roll is for, when it comes from a monster sheet or the initiative tracker. */
   label?: string;
+  /** Initiative rolls go to the log without a notification: the tracker already shows them. */
+  kind?: "initiative";
   notation: string;
   dice: DieResult[];
   modifier: number;
@@ -115,6 +117,10 @@ export interface Backend {
   setCombat(combat: Combat): Promise<void>;
   /** Adds the roll to the log and shares it unless it is hidden. */
   sendRoll(entry: RollEntry): void;
+  /** Same as `sendRoll` for several rolls made together, such as initiative for the whole table. */
+  sendRolls(entries: RollEntry[]): void;
+  /** Asks the host for a panel this wide, in CSS pixels. The host may give less on a small screen. */
+  setPanelWidth?(width: number): Promise<void>;
   /** Standalone preview only. */
   setRole?(role: Role): void;
   /** Standalone preview only. Inside Owlbear Rodeo the theme comes from the room. */

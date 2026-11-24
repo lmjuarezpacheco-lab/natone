@@ -26,7 +26,8 @@
   box-sizing: border-box;
 }
 html,
-body {
+body,
+#app {
   margin: 0;
   height: 100%;
   background: transparent;
@@ -39,12 +40,30 @@ body {
   font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+:root {
+  /* Keep in sync with app.tsx and the manifest in vite.config.ts. */
+  --main-w: 380px;
+  --handle-w: 24px;
+  --tray-w: 300px;
+}
 :root.standalone .app {
-  max-width: 380px;
+  max-width: calc(var(--main-w) + var(--handle-w));
   margin: 0 auto;
   background: var(--paper);
 }
+:root.standalone .app.tray-open {
+  max-width: calc(var(--main-w) + var(--handle-w) + var(--tray-w));
+}
+/* Main column, then the tray handle on the right edge, then the tray while it is open. */
 .app {
+  position: relative;
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+.main {
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -54,6 +73,11 @@ body {
   min-height: 0;
   overflow-y: auto;
   padding: 10px 12px 14px;
+}
+.panel,
+.tray-panel .log {
+  scrollbar-width: thin;
+  scrollbar-color: var(--fill-2) transparent;
 }
 .hidden {
   display: none;
@@ -149,9 +173,10 @@ input[type="checkbox"] {
 }
 .devbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px 8px;
   padding: 6px 12px;
   font-size: 12px;
   color: var(--text-2);
@@ -499,14 +524,11 @@ button.icon:hover:not(:disabled) {
 .tray-wrap {
   position: relative;
   flex: none;
-  height: 200px;
+  height: 190px;
   border-radius: var(--radius);
   background: radial-gradient(ellipse at center, var(--fill-2), var(--fill));
   border: 1px solid var(--line);
   overflow: hidden;
-}
-.tray-wrap.off {
-  display: none;
 }
 .tray-caption {
   position: absolute;
@@ -663,9 +685,6 @@ button.icon:hover:not(:disabled) {
 .notation.invalid {
   border-color: var(--danger);
 }
-.section-toggle {
-  align-self: flex-start;
-}
 .log-title {
   margin: 6px 0 0;
   font-size: 12px;
@@ -681,6 +700,162 @@ button.icon:hover:not(:disabled) {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+/* Dice tray */
+.drawer {
+  flex: none;
+  display: flex;
+  height: 100%;
+  background: var(--paper);
+}
+.tray-handle {
+  position: relative;
+  flex: none;
+  width: var(--handle-w);
+  height: 100%;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-left: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--fill);
+  color: var(--text-2);
+}
+.tray-handle:hover,
+.tray-handle[aria-expanded="true"] {
+  color: var(--text);
+}
+.tray-handle:focus-visible {
+  outline-offset: -2px;
+}
+.tray-handle-arrow {
+  width: 12px;
+  height: 12px;
+  flex: none;
+}
+.tray-handle[aria-expanded="true"] .tray-handle-arrow {
+  transform: scaleX(-1);
+}
+.tray-handle-label {
+  writing-mode: vertical-rl;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.tray-handle-dot {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+.tray-panel {
+  flex: none;
+  width: var(--tray-w);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 12px 12px;
+  border-left: 1px solid var(--line);
+}
+.app:not(.tray-open) .tray-panel {
+  display: none;
+}
+.tray-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex: none;
+}
+.tray-title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.tray-head button.icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+.tray-panel .settings,
+.tray-panel .banner,
+.tray-panel .empty {
+  margin: 0;
+  flex: none;
+}
+.tray-panel .log-title {
+  margin: 2px 0 0;
+  flex: none;
+}
+.tray-panel .log {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* Room for the focus ring. The gutter keeps the lines the same width with or without a scrollbar. */
+  margin: 0 -4px -4px;
+  padding: 2px 4px 4px;
+  scrollbar-gutter: stable;
+}
+/* In the narrow tray a log line has two rows: what was rolled, then the dice and the total. */
+.tray-panel .roll-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 8px;
+  align-items: center;
+}
+.tray-panel .roll-notation {
+  grid-column: 1 / -1;
+}
+
+/* Too narrow for panel and tray side by side: the tray slides over the panel. */
+@media (max-width: 703px) {
+  :root {
+    --tray-w: min(300px, calc(100vw - var(--handle-w) - 32px));
+  }
+  .main {
+    margin-right: var(--handle-w);
+  }
+  .drawer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    transform: translateX(var(--tray-w));
+    transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .app.tray-open .drawer {
+    /* "none" and not a zero offset: a transform would capture the fixed help bubbles. */
+    transform: none;
+    box-shadow: -14px 0 28px -14px rgba(0, 0, 0, 0.55);
+  }
+  .app:not(.tray-open) .tray-panel {
+    display: flex;
+    visibility: hidden;
+    transition: visibility 0s 0.22s;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .drawer,
+  .app:not(.tray-open) .tray-panel {
+    transition: none;
+  }
 }
 .log li {
   padding: 6px 8px;
@@ -722,6 +897,10 @@ button.icon:hover:not(:disabled) {
 }
 
 /* Monsters */
+.sheet.busy .chip {
+  opacity: 0.55;
+  cursor: default;
+}
 .monsters {
   display: flex;
   flex-direction: column;

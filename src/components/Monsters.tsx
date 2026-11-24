@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-import { quickRoll } from "../dice/entry";
-import { type Adv, type Pool, parseNotation } from "../dice/notation";
+import { makeEntry } from "../dice/entry";
+import { type Adv, type Pool, diceToThrow, parseNotation } from "../dice/notation";
+import type { ThrowDice } from "../dice/throw";
 import { buildBackup, isBackup, isHomebrew, parseBackup } from "../monsters/homebrew";
 import { clearLibrary, deleteProfile, getProfile, listHomebrew, listSummaries, saveProfiles } from "../monsters/library";
 import { parseMonsterFile } from "../monsters/parse5etools";
@@ -13,6 +14,9 @@ import { RollLine } from "./RollLine";
 interface Props {
   backend: Backend;
   state: State;
+  throwDice: ThrowDice;
+  /** Dice are rolling in the tray, from this tab or another one. */
+  rolling: boolean;
   /** Sheet to show, or null for the list. */
   openId: string | null;
   onOpen: (id: string | null) => void;
@@ -24,7 +28,7 @@ const ADV_LABEL: Record<Adv, string> = { normal: "Normal", adv: "Ventaja", dis: 
 const signed = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
 const d20 = (modifier: number): Pool => ({ counts: { 20: 1 }, modifier });
 
-export function Monsters({ backend, state, openId, onOpen }: Props) {
+export function Monsters({ backend, state, throwDice, rolling, openId, onOpen }: Props) {
   const [summaries, setSummaries] = useState<ProfileSummary[] | null>(null);
   const [storageError, setStorageError] = useState(false);
   const [query, setQuery] = useState("");
@@ -105,6 +109,8 @@ export function Monsters({ backend, state, openId, onOpen }: Props) {
         onEdit={setEditing}
         backend={backend}
         state={state}
+        throwDice={throwDice}
+        rolling={rolling}
         onBack={() => onOpen(null)}
         onDeleted={() => {
           onOpen(null);
@@ -219,12 +225,14 @@ interface SheetProps {
   id: string;
   backend: Backend;
   state: State;
+  throwDice: ThrowDice;
+  rolling: boolean;
   onBack: () => void;
   onDeleted: () => void;
   onEdit: (profile: Profile) => void;
 }
 
-function Sheet({ id, backend, state, onBack, onDeleted, onEdit }: SheetProps) {
+function Sheet({ id, backend, state, throwDice, rolling, onBack, onDeleted, onEdit }: SheetProps) {
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [adv, setAdv] = useState<Adv>("normal");
   const [crit, setCrit] = useState(false);
@@ -250,8 +258,12 @@ function Sheet({ id, backend, state, onBack, onDeleted, onEdit }: SheetProps) {
     );
   }
 
-  const roll = (label: string, pool: Pool, withAdv: boolean) => {
-    const entry = quickRoll(state.me, pool, withAdv ? adv : "normal", { label: `${profile.name} · ${label}`, hidden });
+  const roll = async (label: string, pool: Pool, withAdv: boolean) => {
+    // One roll at a time while dice are in the tray.
+    if (rolling) return;
+    const mode = withAdv ? adv : "normal";
+    const thrown = await throwDice(diceToThrow(pool, mode));
+    const entry = makeEntry(state.me, pool, mode, thrown, { label: `${profile.name} · ${label}`, hidden });
     setLast(entry);
     backend.sendRoll(entry);
   };
@@ -259,7 +271,7 @@ function Sheet({ id, backend, state, onBack, onDeleted, onEdit }: SheetProps) {
     const pool = parseNotation(notation);
     if (!pool) return;
     const counts = crit ? Object.fromEntries(Object.entries(pool.counts).map(([sides, n]) => [sides, n * 2])) : pool.counts;
-    roll(`${feature.name}${crit ? " (crítico)" : ""}`, { ...pool, counts }, false);
+    void roll(`${feature.name}${crit ? " (crítico)" : ""}`, { ...pool, counts }, false);
   };
   const assign = async () => {
     const ids = await backend.getSelection();
@@ -278,7 +290,7 @@ function Sheet({ id, backend, state, onBack, onDeleted, onEdit }: SheetProps) {
   const hpPool = parseNotation(profile.hpFormula);
 
   return (
-    <div class="monsters sheet">
+    <div class={`monsters sheet ${rolling ? "busy" : ""}`}>
       <div class="statusbar">
         <button type="button" class="ghost" onClick={onBack}>
           ← Biblioteca
@@ -308,7 +320,13 @@ function Sheet({ id, backend, state, onBack, onDeleted, onEdit }: SheetProps) {
       </div>
 
       <div class="result" aria-live="polite">
-        {last ? <RollLine roll={last} big /> : <span class="muted">Pulsa un valor para tirar.</span>}
+        {rolling ? (
+          <span class="muted">Tirando…</span>
+        ) : last ? (
+          <RollLine roll={last} big />
+        ) : (
+          <span class="muted">Pulsa un valor para tirar.</span>
+        )}
       </div>
 
       <dl class="stat-line">

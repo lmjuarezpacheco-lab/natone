@@ -31,14 +31,25 @@ Después activa *NatOne* en la sala.
 
 **Dados**
 
-- d4 a d100, modificador, tirada oculta, historial compartido.
+- d4 a d100, modificador, tirada oculta.
 - Con 2 o más dados del mismo tamaño aparece el control *Todos / Más altos / Más bajos* y cuántos se suman.
   Atajos de un clic: *Ventaja*, *Desventaja* y *4d6, 3 más altos*.
 - El campo de texto acepta la misma regla escrita: `4d6kh3`, `2d20kl1 + 5`.
-- Los dados 3D salen de la bandeja 5 segundos después de la tirada.
-- Dados 3D apagados por defecto. Cada persona los enciende en *Mis dados* y elige entre 9 modelos.
-  Con ese panel abierto, la bandeja muestra una vista previa del modelo y color elegidos.
-  Con 3D apagado, el motor 3D no se descarga.
+
+**Bandeja de dados**
+
+- La pestaña *Bandeja* ocupa el borde derecho del panel. Al abrirla, el panel se ensancha y muestra la bandeja.
+  En una ventana estrecha, la bandeja se desliza sobre el panel.
+- Con la bandeja abierta, todas las tiradas ruedan en 3D: iniciativa (un token, *Tirar todos*, *Tirar faltantes*
+  y el reroll automático de cada ronda), dados y hojas de monstruo. Mientras los dados ruedan no se puede
+  lanzar otra tirada.
+- Con la bandeja cerrada, la tirada es inmediata y el motor 3D no se descarga. Cerrada por defecto.
+- El engranaje abre *Mis dados*: 9 modelos, color y el aviso de tiradas de otros. Con ese panel abierto,
+  la bandeja muestra una vista previa del modelo y color elegidos.
+- Los dados salen de la bandeja 5 segundos después de la tirada.
+- Abajo queda el registro de tiradas, compartido con la mesa: dados, monstruos e iniciativa.
+  La iniciativa de un token oculto queda como tirada oculta: solo la ve quien la tiró.
+- Un punto en la pestaña avisa de tiradas nuevas con la bandeja cerrada.
 - Los demás ven el resultado de la tirada, no la animación.
 
 **Monstruos** (solo GM)
@@ -71,7 +82,7 @@ npm install
 npm run dev
 ```
 
-`http://localhost:5173` abre una vista previa con datos de ejemplo.
+`http://localhost:5173` abre una vista previa con datos de ejemplo. El panel es `panel.html`; la raíz redirige a él.
 
 Para probar dentro de Owlbear Rodeo: *Extensiones → Agregar extensión* y pega
 `http://localhost:5173/manifest.json`.
@@ -82,7 +93,8 @@ npm run build
 ```
 
 Cada push a `main` pasa los tests, compila y publica en el proyecto `natone-extension` de Cloudflare Pages
-(`.github/workflows/deploy.yml`). La extensión se sirve en `https://anoobdm.com/natone/`.
+(`.github/workflows/deploy.yml`). La extensión se sirve bajo `https://anoobdm.com/natone/`:
+el manifiesto en `manifest.json` y el panel en `panel.html`.
 
 `dist/` es un sitio estático, así que también sirve en otro hosting con HTTPS. Si el sitio vive en una
 subcarpeta, compila con `BASE_PATH=/nombre-de-la-carpeta/ npm run build`.

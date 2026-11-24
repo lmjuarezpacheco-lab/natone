@@ -38,6 +38,22 @@ export function rollPatches(list: readonly Combatant[], rng: Rng, onlyMissing: b
   return patches;
 }
 
+/** How many dice a step asks for. Runs `step` once with a counting source and discards the result. */
+export function countRolls(step: (rng: Rng) => unknown): number {
+  let count = 0;
+  step(() => {
+    count += 1;
+    return 1;
+  });
+  return count;
+}
+
+/** Hands out dice that were already thrown, in order. `fallback` covers any call beyond them. */
+export function feedRng(values: readonly number[], fallback: Rng): Rng {
+  let index = 0;
+  return (sides) => (index < values.length ? values[index++] : fallback(sides));
+}
+
 /** Starts round 1. With automatic reroll, combatants without a value are rolled first. */
 export function startCombat(list: readonly Combatant[], settings: Settings, rng: Rng): Step {
   const auto = settings.mode === "reroll" && settings.rerollAuto;

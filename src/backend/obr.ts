@@ -1,8 +1,8 @@
 import OBR, { type Player, type Theme } from "@owlbear-rodeo/sdk";
 import { CH_REQUEST, CH_ROLL, KEY_COMBAT, KEY_SETTINGS } from "../constants";
-import { appendHistory, isHistoryKey, loadHistory, mergeRolls, parseRoll } from "../history";
+import { MAX_BATCH, appendHistory, isHistoryKey, loadHistory, mergeRolls, parseRolls } from "../history";
 import { readCombat, readSettings } from "../logic";
-import type { Backend, PlayerInfo, State, ThemeColors } from "../types";
+import type { Backend, PlayerInfo, RollEntry, State, ThemeColors } from "../types";
 import { DEFAULT_COMBAT } from "../types";
 import { linkProfile, setActive, toCombatants, writePatch } from "./items";
 
@@ -68,8 +68,8 @@ export async function createObrBackend(): Promise<Backend> {
   OBR.player.onChange((p) => set({ me: { id: p.id, name: p.name, role: p.role, color: p.color } }));
   OBR.party.onChange((players) => set({ players: [toInfo(state.me), ...players.map(toInfo)] }));
   OBR.broadcast.onMessage(CH_ROLL, (event) => {
-    const roll = parseRoll(event.data);
-    if (roll) set({ rolls: mergeRolls(state.rolls, [roll]) });
+    const rolls = parseRolls(event.data);
+    if (rolls.length > 0) set({ rolls: mergeRolls(state.rolls, rolls) });
   });
   // The background page stores rolls that arrive while this panel is closed or busy.
   window.addEventListener("storage", (event) => {
@@ -77,6 +77,18 @@ export async function createObrBackend(): Promise<Backend> {
   });
 
   await readScene();
+
+  const sendRolls = (entries: RollEntry[]) => {
+    if (entries.length === 0) return;
+    set({ rolls: mergeRolls(state.rolls, entries) });
+    appendHistory(roomId, entries);
+    // Hidden rolls never leave this client.
+    const shared = entries.filter((entry) => !entry.hidden);
+    for (let start = 0; start < shared.length; start += MAX_BATCH) {
+      const batch = shared.slice(start, start + MAX_BATCH);
+      void OBR.broadcast.sendMessage(CH_ROLL, batch.length === 1 ? batch[0] : batch, { destination: "REMOTE" });
+    }
+  };
 
   return {
     getState: () => state,
@@ -124,10 +136,10 @@ export async function createObrBackend(): Promise<Backend> {
     async setCombat(combat) {
       await OBR.scene.setMetadata({ [KEY_COMBAT]: combat });
     },
-    sendRoll(entry) {
-      set({ rolls: mergeRolls(state.rolls, [entry]) });
-      appendHistory(roomId, entry);
-      if (!entry.hidden) void OBR.broadcast.sendMessage(CH_ROLL, entry, { destination: "REMOTE" });
+    sendRoll: (entry) => sendRolls([entry]),
+    sendRolls,
+    async setPanelWidth(width) {
+      await OBR.action.setWidth(width);
     },
   };
 }

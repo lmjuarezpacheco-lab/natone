@@ -3,7 +3,7 @@ import OBR from "@owlbear-rodeo/sdk";
 import { ownerOf, readItemData, setActive, writePatch } from "./backend/items";
 import { syncTurnMarker } from "./backend/turnMarker";
 import { CH_REQUEST, CH_ROLL, ID, KEY_ITEM, KEY_SETTINGS } from "./constants";
-import { appendHistory, parseRoll } from "./history";
+import { appendHistory, parseRolls } from "./history";
 import { readSettings, sanitizePlayerPatch } from "./logic";
 import { loadPrefs } from "./prefs";
 
@@ -87,9 +87,13 @@ OBR.onReady(() => {
   setupTurnMarker();
   OBR.broadcast.onMessage(CH_REQUEST, (event) => void handleRequest(event));
   OBR.broadcast.onMessage(CH_ROLL, (event) => {
-    const roll = parseRoll(event.data);
-    if (!roll) return;
-    appendHistory(OBR.room.id, roll);
-    if (loadPrefs().notify) void OBR.notification.show(`${roll.playerName}: ${roll.label ? `${roll.label}, ` : ""}${roll.notation} = ${roll.total}`);
+    const rolls = parseRolls(event.data);
+    if (rolls.length === 0) return;
+    appendHistory(OBR.room.id, rolls);
+    if (!loadPrefs().notify) return;
+    // Initiative rolls show in the tracker. A notification per combatant would bury the table.
+    for (const roll of rolls.filter((r) => r.kind !== "initiative")) {
+      void OBR.notification.show(`${roll.playerName}: ${roll.label ? `${roll.label}, ` : ""}${roll.notation} = ${roll.total}`);
+    }
   });
 });

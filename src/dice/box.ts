@@ -7,6 +7,12 @@ const CLEAR_AFTER_MS = 5000;
 let box: Promise<DiceBox> | null = null;
 let applied = "";
 let clearTimer: ReturnType<typeof setTimeout> | undefined;
+let cancelRoll: ((reason: Error) => void) | null = null;
+/** Goes up on every `clearBox`, so a roll that was still waiting for the engine knows it was cleared. */
+let cleared = 0;
+
+/** The dice were taken out of the tray before they settled, so that roll has no result. */
+export class RollCleared extends Error {}
 
 async function getBox(container: string, theme: string, themeColor: string): Promise<DiceBox> {
   if (!box) {
@@ -58,14 +64,19 @@ export async function roll3d(
   autoClear = true,
 ): Promise<{ sides: number; value: number }[]> {
   clearTimeout(clearTimer);
+  const startedAt = cleared;
   const instance = await withTimeout(getBox(container, theme, themeColor), 20000);
-  const results = await withTimeout(
-    instance.roll(
-      dice.map((d) => `${d.qty}d${d.sides}`),
-      { theme, themeColor },
-    ),
-    20000,
-  );
+  if (cleared !== startedAt) throw new RollCleared("dice cleared");
+  const results = await new Promise<Awaited<ReturnType<DiceBox["roll"]>>>((resolve, reject) => {
+    cancelRoll = reject;
+    withTimeout(
+      instance.roll(
+        dice.map((d) => `${d.qty}d${d.sides}`),
+        { theme, themeColor },
+      ),
+      20000,
+    ).then(resolve, reject);
+  }).finally(() => (cancelRoll = null));
   if (autoClear) clearTimer = setTimeout(() => instance.clear(), CLEAR_AFTER_MS);
   return results.map((r) => ({ sides: Number(r.sides), value: r.value }));
 }
@@ -77,8 +88,11 @@ export async function preview3d(container: string, theme: string, themeColor: st
   await roll3d(container, SAMPLE_DICE, theme, themeColor, false);
 }
 
+/** Empties the tray. A roll that is still moving ends with `RollCleared`. */
 export function clearBox(): void {
   clearTimeout(clearTimer);
+  cleared += 1;
+  cancelRoll?.(new RollCleared("dice cleared"));
   void box?.then((instance) => instance.clear()).catch(() => {});
 }
 

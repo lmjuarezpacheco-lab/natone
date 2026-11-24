@@ -98,6 +98,13 @@ export function createMockBackend(): Backend {
     sendRoll(entry) {
       set({ rolls: mergeRolls(state.rolls, [entry]) });
     },
+    sendRolls(entries) {
+      set({ rolls: mergeRolls(state.rolls, entries) });
+    },
+    async setPanelWidth(width) {
+      // A page that embeds the preview in a frame may follow the width. The message carries nothing else.
+      if (window.parent !== window) window.parent.postMessage({ source: "natone", panelWidth: width }, "*");
+    },
     setThemeMode(mode) {
       set({ theme: PREVIEW_THEMES[mode] });
     },

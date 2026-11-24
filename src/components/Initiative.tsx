@@ -1,28 +1,35 @@
 import { useState } from "preact/hooks";
+import { initiativeEntries } from "../dice/entry";
 import { cryptoRng } from "../dice/notation";
+import { type ThrowDice, throwD20s } from "../dice/throw";
 import {
   BONUS_RANGE,
   INITIATIVE_RANGE,
   canEdit,
+  countRolls,
   endCombat,
+  feedRng,
   nextTurn,
   previousTurn,
   rollPatches,
   sortCombatants,
   type Step,
 } from "../logic";
-import type { Backend, Combatant, Settings, State } from "../types";
+import type { Backend, Combatant, Patches, Settings, State } from "../types";
 import { Help } from "./Help";
 import { NumField } from "./NumField";
 
 interface Props {
   backend: Backend;
   state: State;
+  throwDice: ThrowDice;
+  /** Dice are rolling in the tray, from this tab or another one. */
+  rolling: boolean;
   /** Opens a linked monster sheet. */
   onOpenProfile: (id: string) => void;
 }
 
-export function Initiative({ backend, state, onOpenProfile }: Props) {
+export function Initiative({ backend, state, throwDice, rolling, onOpenProfile }: Props) {
   const { me, settings, combat, combatants, players } = state;
   const isGM = me.role === "GM";
   const [showSettings, setShowSettings] = useState(false);
@@ -41,9 +48,34 @@ export function Initiative({ backend, state, onOpenProfile }: Props) {
     await backend.patchCombatants(step.patches);
     await backend.setCombat(step.combat);
   };
-  const next = () => apply(nextTurn(combatants, combat, settings, cryptoRng));
+  /** Writes rolled initiative and adds one log line per combatant. A hidden token gets a hidden line. */
+  const logRolls = (targets: readonly Combatant[], patches: Patches) =>
+    backend.sendRolls(initiativeEntries(me, targets, patches));
+  const next = async () => {
+    if (rolling) return;
+    // The d20s are thrown first, in the tray when it is open. The step then uses those faces.
+    const needed = countRolls((rng) => nextTurn(combatants, combat, settings, rng));
+    const faces = await throwD20s(throwDice, needed);
+    const step = nextTurn(combatants, combat, settings, feedRng(faces, cryptoRng));
+    await apply(step);
+    logRolls(combatants, step.patches);
+  };
   const previous = () => backend.setCombat(previousTurn(combatants, combat, settings));
-  const rollFor = (c: Combatant) => backend.patchCombatants({ [c.id]: { initiative: cryptoRng(20) + c.bonus } });
+  const rollMany = async (onlyMissing: boolean) => {
+    if (rolling) return;
+    const needed = countRolls((rng) => rollPatches(combatants, rng, onlyMissing));
+    const faces = await throwD20s(throwDice, needed);
+    const patches = rollPatches(combatants, feedRng(faces, cryptoRng), onlyMissing);
+    await backend.patchCombatants(patches);
+    logRolls(combatants, patches);
+  };
+  const rollFor = async (c: Combatant) => {
+    if (rolling) return;
+    const [face] = await throwD20s(throwDice, 1);
+    const patches: Patches = { [c.id]: { initiative: face + c.bonus } };
+    await backend.patchCombatants(patches);
+    logRolls([c], patches);
+  };
 
   const primaryLabel = !running
     ? "Iniciar combate"
@@ -151,6 +183,7 @@ export function Initiative({ backend, state, onOpenProfile }: Props) {
                           class="icon"
                           title={`Tirar d20 ${formatBonus(c.bonus)}`}
                           aria-label={`Tirar iniciativa de ${c.name}`}
+                          disabled={rolling}
                           onClick={() => rollFor(c)}
                         >
                           <D20Icon />
@@ -221,23 +254,24 @@ export function Initiative({ backend, state, onOpenProfile }: Props) {
             <button type="button" disabled={!running || waiting} onClick={previous}>
               Anterior
             </button>
-            <button type="button" class="primary" onClick={next}>
-              {primaryLabel}
+            <button type="button" class="primary" disabled={rolling} onClick={next}>
+              {rolling ? "Tirando…" : primaryLabel}
             </button>
           </div>
           <div class="minor-buttons">
             <button
               type="button"
               class="ghost"
-              onClick={() => backend.patchCombatants(rollPatches(combatants, cryptoRng, false))}
+              disabled={rolling}
+              onClick={() => rollMany(false)}
             >
               Tirar todos
             </button>
             <button
               type="button"
               class="ghost"
-              disabled={missing === 0}
-              onClick={() => backend.patchCombatants(rollPatches(combatants, cryptoRng, true))}
+              disabled={missing === 0 || rolling}
+              onClick={() => rollMany(true)}
             >
               Tirar faltantes
             </button>

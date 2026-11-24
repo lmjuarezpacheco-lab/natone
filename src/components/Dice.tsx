@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "preact/hooks";
-import { clearBox, preview3d, resizeBox, roll3d } from "../dice/box";
+import { useState } from "preact/hooks";
+import { clearBox } from "../dice/box";
 import { makeEntry } from "../dice/entry";
 import {
   DIE_SIDES,
@@ -12,12 +12,10 @@ import {
   diceToThrow,
   formatNotation,
   parseNotation,
-  throwWithRng,
   withCount,
   withKeep,
 } from "../dice/notation";
-import { THEMES, findTheme } from "../dice/themes";
-import { type Prefs, loadPrefs, savePrefs } from "../prefs";
+import type { ThrowDice } from "../dice/throw";
 import type { Backend, RollEntry, State } from "../types";
 import { Help } from "./Help";
 import { RollLine } from "./RollLine";
@@ -25,8 +23,9 @@ import { RollLine } from "./RollLine";
 interface Props {
   backend: Backend;
   state: State;
-  /** False while another tab is shown. The 3D tray needs a resize when it comes back. */
-  visible: boolean;
+  throwDice: ThrowDice;
+  /** Dice are rolling in the tray, from this tab or another one. */
+  rolling: boolean;
 }
 
 /** One-click pools for the most common keep rules. */
@@ -36,46 +35,11 @@ const PRESETS: { label: string; sides: number; count: number; keep: Keep }[] = [
   { label: "4d6, 3 más altos", sides: 6, count: 4, keep: { mode: "h", n: 3 } },
 ];
 
-export function Dice({ backend, state, visible }: Props) {
-  const [prefs, setPrefs] = useState<Prefs>(loadPrefs);
+export function Dice({ backend, state, throwDice, rolling }: Props) {
   const [pool, setPool] = useState<Pool>(EMPTY_POOL);
   const [text, setText] = useState("");
   const [hidden, setHidden] = useState(false);
-  const [rolling, setRolling] = useState(false);
   const [last, setLast] = useState<RollEntry | null>(null);
-  const [notice, setNotice] = useState("");
-  const [showPrefs, setShowPrefs] = useState(false);
-  const rollingNow = useRef(false);
-
-  const theme = findTheme(prefs.theme);
-
-  useEffect(() => {
-    if (visible && prefs.dice3d) resizeBox();
-  }, [visible, prefs.dice3d]);
-
-  // While "Mis dados" is open, the tray shows the chosen model and color.
-  useEffect(() => {
-    if (!showPrefs || !prefs.dice3d || !visible) return;
-    const timer = setTimeout(() => {
-      if (rollingNow.current) return;
-      preview3d("#dice-tray", theme.id, prefs.themeColor).catch((error) => {
-        console.warn("3D dice preview failed.", error);
-        setNotice("Dados 3D no disponibles ahora.");
-      });
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [showPrefs, prefs.dice3d, theme.id, prefs.themeColor, visible]);
-
-  const togglePrefs = () => {
-    if (showPrefs) clearBox();
-    setShowPrefs(!showPrefs);
-  };
-
-  const updatePrefs = (patch: Partial<Prefs>) => {
-    const next = { ...prefs, ...patch };
-    setPrefs(next);
-    savePrefs(next);
-  };
 
   const updatePool = (next: Pool) => {
     setPool(next);
@@ -111,82 +75,14 @@ export function Dice({ backend, state, visible }: Props) {
 
   const roll = async () => {
     if (!canRoll) return;
-    setRolling(true);
-    rollingNow.current = true;
-    setNotice("");
-    const dice = diceToThrow(pool, "normal");
-    const expected = dice.reduce((sum, d) => sum + d.qty, 0);
-    let thrown: { sides: number; value: number }[] | null = null;
-    if (prefs.dice3d) {
-      try {
-        const result = await roll3d("#dice-tray", dice, theme.id, prefs.themeColor);
-        const valid =
-          result.length === expected && result.every((d) => Number.isInteger(d.value) && d.value >= 1 && d.value <= d.sides);
-        if (valid) thrown = result;
-        else throw new Error("unexpected 3D dice result");
-      } catch (error) {
-        console.warn("3D dice failed, using a plain roll.", error);
-        setNotice("Dados 3D no disponibles ahora. Se usó una tirada simple.");
-      }
-    }
-    thrown ??= throwWithRng(dice);
-
+    const thrown = await throwDice(diceToThrow(pool, "normal"));
     const entry = makeEntry(state.me, pool, "normal", thrown, { hidden });
     setLast(entry);
     backend.sendRoll(entry);
-    rollingNow.current = false;
-    setRolling(false);
   };
 
   return (
     <div class="dice">
-      <button type="button" class="ghost section-toggle" aria-expanded={showPrefs} onClick={togglePrefs}>
-        Mis dados {showPrefs ? "▴" : "▾"}
-      </button>
-      {showPrefs && (
-        <div class="settings">
-          <label class="check">
-            <input type="checkbox" checked={prefs.dice3d} onChange={(e) => updatePrefs({ dice3d: e.currentTarget.checked })} />
-            Dados 3D
-            <Help text="Muestra los dados rodando en la bandeja. Solo cambia lo que ves tú. Apágalos si tu equipo va lento." />
-          </label>
-          <div class="field inline">
-            <label>
-              Modelo
-              <select value={theme.id} disabled={!prefs.dice3d} onChange={(e) => updatePrefs({ theme: e.currentTarget.value })}>
-                {THEMES.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Color
-              <input
-                type="color"
-                value={prefs.themeColor}
-                disabled={!prefs.dice3d || !theme.colorable}
-                onChange={(e) => updatePrefs({ themeColor: e.currentTarget.value })}
-              />
-            </label>
-          </div>
-          {prefs.dice3d && !theme.colorable && <p class="field-help">Este modelo tiene color fijo.</p>}
-          <label class="check">
-            <input type="checkbox" checked={prefs.notify} onChange={(e) => updatePrefs({ notify: e.currentTarget.checked })} />
-            Avisarme de tiradas de otros
-            <Help text="Muestra un aviso cada vez que otra persona comparte una tirada." />
-          </label>
-          <p class="field-help">Estos ajustes son solo tuyos. Los demás no ven tus dados 3D, solo el resultado.</p>
-        </div>
-      )}
-
-      {/* The 3D engine puts its canvas inside #dice-tray, so that element must have no other children. */}
-      <div class={`tray-wrap ${prefs.dice3d ? "" : "off"}`}>
-        <div id="dice-tray" class="tray" aria-hidden="true" />
-        {showPrefs && <span class="tray-caption">Vista previa de tus dados</span>}
-      </div>
-
       <div class="result" aria-live="polite">
         {rolling ? (
           <span class="muted">Tirando…</span>
@@ -196,8 +92,6 @@ export function Dice({ backend, state, visible }: Props) {
           <span class="muted">Elige dados y pulsa Tirar.</span>
         )}
       </div>
-      {notice && <p class="banner">{notice}</p>}
-
       <div class="die-grid">
         {DIE_SIDES.map((sides) => {
           const count = pool.counts[sides] ?? 0;
@@ -315,7 +209,8 @@ export function Dice({ backend, state, visible }: Props) {
           disabled={diceCount(pool) === 0 && pool.modifier === 0 && text === ""}
           onClick={() => {
             updatePool(EMPTY_POOL);
-            clearBox();
+            // Dice that are still rolling must land first, or their roll would never finish.
+            if (!rolling) clearBox();
           }}
         >
           Limpiar
@@ -335,24 +230,6 @@ export function Dice({ backend, state, visible }: Props) {
           <Help text="La tirada no se comparte. Solo tú ves el resultado." />
         </label>
       </div>
-
-      <h2 class="log-title">Tiradas</h2>
-      {state.rolls.length === 0 ? (
-        <p class="empty">Aún no hay tiradas.</p>
-      ) : (
-        <ul class="log">
-          {state.rolls.map((r) => (
-            <li key={r.id}>
-              <span class="log-who">
-                <span class="dot" style={{ background: r.color }} />
-                {r.playerName}
-                {r.hidden && <span class="tag">oculta</span>}
-              </span>
-              <RollLine roll={r} />
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }
