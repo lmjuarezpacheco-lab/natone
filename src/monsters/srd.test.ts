@@ -21,6 +21,7 @@ describe("included SRD 5.2.1 creatures", () => {
       expect(profile.hp, profile.name).toBeGreaterThan(0);
       for (const ability of ABILITIES) expect(profile.abilities[ability], `${profile.name} ${ability}`).toBeGreaterThan(0);
       for (const feature of profile.sections.flatMap((s) => s.features)) {
+        expect(feature.name + feature.text, `${profile.name}: markdown left in the text`).not.toMatch(/\*|\[\[|\]\]/);
         for (const damage of feature.damage) expect(parseNotation(damage.notation), `${profile.name}: ${damage.notation}`).not.toBeNull();
       }
     }

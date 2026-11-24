@@ -1041,6 +1041,8 @@ code {
 .feature p {
   margin: 0 0 5px;
   font-size: 13px;
+  /* Spell lists in a stat block keep one line each. */
+  white-space: pre-line;
 }
 .sheet .statusbar {
   margin: -4px -6px 0;

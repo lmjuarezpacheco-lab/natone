@@ -53,6 +53,15 @@ const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const fraction = (cr) => ({ 0.125: "1/8", 0.25: "1/4", 0.5: "1/2" })[Number(cr)] ?? String(Number(cr));
 const clean = (notation) => notation.replace(/−/g, "-").replace(/\s+/g, " ").trim();
 
+/** Open5e texts carry markdown (bold labels, "- " list items, blank lines); the panel shows plain lines. */
+const tidy = (text) =>
+  text
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/^\s*[-•]\s+/gm, "")
+    .replace(/\n\s*\n+/g, "\n")
+    .trim();
+
 /** Every "N (XdY + Z) <type> damage" in an English text. Healing ("Hit Points") is left out. */
 function damageEn(text) {
   const found = [];
@@ -133,7 +142,7 @@ function english(row) {
   const sections = [];
   const traitRows = traitsOf.get(row.pk) ?? [];
   if (traitRows.length > 0) {
-    sections.push({ title: SECTION.en.traits, features: traitRows.map((t) => ({ name: t.fields.name, text: t.fields.desc, hit: null, damage: damageEn(t.fields.desc) })) });
+    sections.push({ title: SECTION.en.traits, features: traitRows.map((t) => ({ name: t.fields.name, text: tidy(t.fields.desc), hit: null, damage: damageEn(t.fields.desc) })) });
   }
   for (const type of ["ACTION", "BONUS_ACTION", "REACTION", "LEGENDARY_ACTION"]) {
     const list = (actionsOf.get(row.pk) ?? []).filter((a) => a.fields.action_type === type).sort((a, b) => a.fields.order_in_statblock - b.fields.order_in_statblock);
@@ -142,7 +151,7 @@ function english(row) {
       title: SECTION.en[type],
       features: list.map((a) => {
         // Open5e drops the "Hit:" label of attack rolls; it is put back so the text reads like the book.
-        let text = a.fields.desc;
+        let text = tidy(a.fields.desc);
         if (/Attack Roll:/.test(text) && !/Hit:/.test(text)) text = text.replace(/((?:ft\.|feet)(?: \([^)]*\))?) (\d+ \(|\d+ [A-Z])/, "$1 Hit: $2");
         const attack = (attacksOf.get(a.pk) ?? [])[0];
         return {
@@ -166,7 +175,7 @@ function english(row) {
   };
 }
 
-const plain = (s) => s.replace(/\*([^*]+)\*/g, "$1").replace(/\[\[(?:[^\]|]*\|)?([^\]]+)\]\]/g, "$1").replace(/\s*\n\s*/g, " ").trim();
+const plain = (s) => s.replace(/\*\*([^*]+)\*\*/g, "$1").replace(/\*([^*]+)\*/g, "$1").replace(/\[\[(?:[^\]|]*\|)?([^\]]+)\]\]/g, "$1").replace(/\s*\n\s*/g, " ").trim();
 
 /** Reads one Spanish markdown stat block. */
 function readSpanish(file) {
@@ -202,7 +211,8 @@ function readSpanish(file) {
       current.features.push({ name: plain(feature[1]), text: words, hit: hitIn(words, /Tirada de ataque[^:]*:\s*([+−-]\d+)/), damage: damageEs(words) });
     } else if (current.features.length > 0) {
       const last = current.features.at(-1);
-      last.text += ` ${plain(text)}`;
+      // Spell lists and similar come as separate paragraphs; they stay on their own lines.
+      last.text += `\n${plain(text)}`;
       last.damage = damageEs(last.text);
     } else {
       // Text before the first entry, such as the uses of legendary actions.
