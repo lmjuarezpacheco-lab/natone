@@ -38,8 +38,11 @@ function useBackendState(backend: Backend): State {
   return state;
 }
 
-/** How long the closed tray stays in place while the host shrinks the window, before it is hidden for good. */
-const HIDE_MS = 500;
+/** How long the tray takes to slide out or back in, in milliseconds. */
+const SLIDE_MS = 260;
+const easeOut = (x: number) => 1 - (1 - x) ** 3;
+const easeInOut = (x: number) => (x < 0.5 ? 4 * x ** 3 : 1 - (-2 * x + 2) ** 3 / 2);
+const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
 /** A window that cannot be widened: the preview alone in a narrow window, as on a phone. */
 const cannotWiden = (standalone: boolean) => standalone && window.parent === window && window.innerWidth < OPEN_WIDTH;
@@ -86,45 +89,65 @@ export function App({ backend }: { backend: Backend }) {
     });
   };
 
-  // The panel is always laid out 704 px wide: main column, handle, tray. Opening and closing only change
-  // the state and ask the host for the wide or the narrow window, whose own resize reveals or clips the
-  // tray. Nothing inside moves. The last click wins: the width asked from the host follows `wanted`.
+  // The tray is a drawer: the tray and its handle slide out together, the handle always at the drawer's
+  // outer edge. The panel width runs from 404 to 704 px frame by frame, and every frame the host is asked
+  // for that same width, so Owlbear's popover grows and shrinks with the drawer instead of jumping.
+  // A click during the slide turns it around from where it is.
   const wanted = useRef(prefs.tray);
-  const widthSent = useRef(CLOSED_WIDTH);
-  const widthBusy = useRef(false);
-  const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const width = useRef(CLOSED_WIDTH);
+  const frame = useRef(0);
   const standaloneNow = useRef(state.standalone);
   standaloneNow.current = state.standalone;
-  const pushWidth = async () => {
-    if (widthBusy.current) return;
-    widthBusy.current = true;
-    try {
-      while (widthSent.current !== (wanted.current ? OPEN_WIDTH : CLOSED_WIDTH)) {
-        widthSent.current = wanted.current ? OPEN_WIDTH : CLOSED_WIDTH;
-        await backend.setPanelWidth?.(widthSent.current).catch(() => {});
-      }
-    } finally {
-      widthBusy.current = false;
+  const setWidth = (w: number) => {
+    width.current = w;
+    document.documentElement.style.setProperty("--panel-w", `${w}px`);
+    void backend.setPanelWidth?.(Math.round(w)).catch(() => {});
+  };
+  const slideTo = (target: number, done: () => void) => {
+    cancelAnimationFrame(frame.current);
+    const from = width.current;
+    if (from === target || reducedMotion()) {
+      setWidth(target);
+      done();
+      return;
     }
+    const ease = target > from ? easeOut : easeInOut;
+    const duration = (SLIDE_MS * Math.abs(target - from)) / TRAY_WIDTH;
+    const start = performance.now();
+    const step = (now: number) => {
+      const x = Math.min(1, (now - start) / duration);
+      setWidth(from + (target - from) * ease(x));
+      if (x < 1) frame.current = requestAnimationFrame(step);
+      else done();
+    };
+    frame.current = requestAnimationFrame(step);
   };
   const applyTray = (open: boolean) => {
     wanted.current = open;
-    clearTimeout(hideTimer.current);
+    const narrow = cannotWiden(standaloneNow.current);
     if (open) {
-      setCompact(cannotWiden(standaloneNow.current));
+      setCompact(narrow);
       setTrayGone(false);
       setUnread(false);
+      setTrayOpen(true);
     } else {
       // Dice that are still rolling finish out of sight: their result is already owed to a roll.
       if (pending.current === 0) clearBox();
       setTrayNotice("");
-      hideTimer.current = setTimeout(() => {
+      setTrayOpen(false);
+    }
+    // On a phone the window cannot grow: the drawer slides over the main column with CSS instead.
+    if (narrow) {
+      cancelAnimationFrame(frame.current);
+      if (!open) setTimeout(() => !wanted.current && setTrayGone(true), SLIDE_MS);
+      return;
+    }
+    slideTo(open ? OPEN_WIDTH : CLOSED_WIDTH, () => {
+      if (!wanted.current) {
         setTrayGone(true);
         setCompact(cannotWiden(standaloneNow.current));
-      }, HIDE_MS);
-    }
-    setTrayOpen(open);
-    void pushWidth();
+      }
+    });
   };
   const toggleTray = () => {
     const open = !wanted.current;
@@ -132,9 +155,12 @@ export function App({ backend }: { backend: Backend }) {
     applyTray(open);
   };
 
-  // A tray that was open last time opens again.
-  useEffect(() => {
+  // A tray that was open last time is open again at once, without sliding.
+  useLayoutEffect(() => {
+    if (wanted.current && !cannotWiden(standaloneNow.current)) setWidth(OPEN_WIDTH);
+    else setWidth(CLOSED_WIDTH);
     if (wanted.current) applyTray(true);
+    return () => cancelAnimationFrame(frame.current);
   }, []);
 
   // A preview window that the user resizes while the tray is closed may switch between the two layouts.
@@ -271,6 +297,20 @@ export function App({ backend }: { backend: Backend }) {
       </div>
 
       <div class="drawer">
+        {/* The tray sits at the right end of its clip, so it travels out with the handle. */}
+        <div class="tray-clip">
+          {/* Stays mounted while closed: the 3D engine keeps its canvas inside. */}
+          <Tray
+            open={trayOpen}
+            prefs={prefs}
+            onPrefs={updatePrefs}
+            rolls={state.rolls}
+            rolling={rolling}
+            notice={trayNotice}
+            onNotice={setTrayNotice}
+            exclusive={exclusive}
+          />
+        </div>
         <button
           type="button"
           class="tray-handle"
@@ -286,17 +326,6 @@ export function App({ backend }: { backend: Backend }) {
           <span class="tray-handle-label">{t("tray.handle")}</span>
           {unread && <span class="tray-handle-dot" aria-hidden="true" />}
         </button>
-        {/* Stays mounted while closed: the 3D engine keeps its canvas inside. */}
-        <Tray
-          open={trayOpen}
-          prefs={prefs}
-          onPrefs={updatePrefs}
-          rolls={state.rolls}
-          rolling={rolling}
-          notice={trayNotice}
-          onNotice={setTrayNotice}
-          exclusive={exclusive}
-        />
       </div>
     </div>
   );

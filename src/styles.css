@@ -36,6 +36,10 @@ body,
 html {
   background: var(--paper);
 }
+/* The preview outside Owlbear sits on the room's darker background, so the panel reads as a panel. */
+:root.standalone {
+  background: var(--bg);
+}
 body {
   color: var(--text);
   font: 14px/1.4 Roboto, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -51,13 +55,12 @@ body {
   --handle-w: 24px;
   --tray-w: 300px;
 }
-/* The panel is always one fixed row: main column at 0, handle at 380, tray at 404. A narrower window clips
-   what is to the right and a wider one shows it, so when the host resizes the popover nothing moves. No
-   rule here may depend on the window width. */
+/* One row: main column, then the drawer (tray and handle). The panel is as wide as --panel-w, which app.tsx
+   runs from 404 to 704 px while the drawer slides; Owlbear is asked for the same width on every frame. */
 .app {
   position: relative;
   display: flex;
-  width: calc(var(--main-w) + var(--handle-w) + var(--tray-w));
+  width: min(100vw, var(--panel-w, calc(var(--main-w) + var(--handle-w))));
   height: 100%;
   overflow: hidden;
   background: var(--paper);
@@ -707,12 +710,21 @@ button.icon:hover:not(:disabled) {
   gap: 4px;
 }
 
-/* Dice tray */
+/* Dice tray: a drawer. The clip takes whatever width the panel has beyond the main column and the handle,
+   and the tray is pinned to the clip's right end, so tray and handle travel out together. */
 .drawer {
-  flex: none;
+  flex: 1 1 auto;
+  min-width: var(--handle-w);
   display: flex;
   height: 100%;
   background: var(--paper);
+}
+.tray-clip {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-end;
+  overflow: hidden;
 }
 .tray-handle {
   position: relative;
@@ -773,10 +785,8 @@ button.icon:hover:not(:disabled) {
   padding: 8px 12px 12px;
   border-left: 1px solid var(--line);
 }
-/* Closed for a while: the host has narrowed the window, so the tray is outside it. Hide it for good. */
-.app.tray-gone .tray-panel {
-  visibility: hidden;
-}
+/* A closed tray is clipped to nothing and inert, but never hidden: hiding it would make the browser drop
+   the 3D canvas, which then shows black for a moment the next time the drawer slides out. */
 .tray-head {
   display: flex;
   align-items: center;
@@ -837,7 +847,12 @@ button.icon:hover:not(:disabled) {
 .app.compact .main {
   width: calc(100% - var(--handle-w));
 }
+.app.compact .tray-clip {
+  flex: none;
+  overflow: visible;
+}
 .app.compact .drawer {
+  flex-direction: row-reverse;
   position: absolute;
   top: 0;
   right: 0;
